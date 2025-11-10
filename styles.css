@@ -1,0 +1,40 @@
+.verse-detector-view .verse-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    padding: 2px 0;
+}
+
+.verse-detector-view .verse-item b {
+    flex: 1;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.verse-detector-view .verse-item .button svg {
+    filter: drop-shadow(0 0 2px var(--interactive-accent));
+    transition: filter 0.2s ease, transform 0.1s ease;
+}
+
+.verse-detector-view .verse-item .button:hover svg {
+    filter: drop-shadow(0 0 6px var(--interactive-accent));
+    transform: scale(1.1);
+}
+
+.verse-detector-view .refresh-button {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+}
+
+.verse-detector-view .refresh-button .button svg {
+    filter: drop-shadow(0 0 2px var(--interactive-accent));
+}
+
+.verse-detector-view .refresh-button .button:hover svg {
+    filter: drop-shadow(0 0 6px var(--interactive-accent));
+    transform: scale(1.1);
+}
