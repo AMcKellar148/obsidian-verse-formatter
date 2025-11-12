@@ -12,21 +12,41 @@ export default class VerseFormatter extends Plugin {
 		// Inject CSS dynamically
 		const style = document.createElement('style');
 		style.textContent = `
-		.verse-detector-view .verse-item button svg,
-		.verse-detector-view .refresh-button button svg {
+			/* ==== Verse Detector Sidebar ==== */
+
+			/* Verse item buttons, Refresh & Undo buttons */
+			.verse-detector-view .verse-item button,
+			.verse-detector-view .refresh-button button,
+			.verse-detector-view .undo-button button {
 			filter: drop-shadow(0 0 2px var(--interactive-accent));
 			transition: filter 0.2s ease, transform 0.1s ease;
-		}
+			}
 
-		/* Glow & pulse for hover */
-		.verse-detector-view .verse-item button:hover svg,
-		.verse-detector-view .refresh-button button:hover svg {
-			filter: drop-shadow(0 0 6px var(--interactive-accent));
+			/* Glow & scale on hover for all buttons */
+			.verse-detector-view .verse-item button:hover,
+			.verse-detector-view .refresh-button button:hover,
+			.verse-detector-view .undo-button button:hover {
+			filter: drop-shadow(0 0 2px var(--interactive-accent));
 			transform: scale(1.1);
-		}
+			}
 
-		/* Verse list item layout */
-		.verse-detector-view .verse-item {
+			/* Soft pulse animation for Refresh & Undo */
+			.verse-detector-view .refresh-button button,
+			.verse-detector-view .undo-button button {
+			animation: softGlow 2.5s ease-in-out infinite alternate;
+			}
+
+			@keyframes softGlow {
+			from {
+				filter: drop-shadow(0 0 2px var(--interactive-accent));
+			}
+			to {
+				filter: drop-shadow(0 0 8px var(--interactive-accent));
+			}
+			}
+
+			/* Verse list items */
+			.verse-detector-view .verse-item {
 			display: flex;
 			align-items: center;
 			gap: 6px;
@@ -34,71 +54,50 @@ export default class VerseFormatter extends Plugin {
 			padding: 3px 4px;
 			border-radius: 6px;
 			transition: background 0.2s ease;
-		}
+			}
 
-		/* Hover background to make rows feel clickable */
-		.verse-detector-view .verse-item:hover {
+			/* Hover background for verse rows */
+			.verse-detector-view .verse-item:hover {
 			background-color: var(--background-modifier-hover);
-		}
+			}
 
-		/* Verse label (text) */
-		.verse-detector-view .verse-item b {
+			/* Verse label text */
+			.verse-detector-view .verse-item b {
 			flex: 1;
 			font-weight: 500;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			color: var(--interactive-accent);
-			opacity: 0.55; /* lighter accent tone */
+			opacity: 0.55;
 			cursor: pointer;
 			transition: all 0.25s ease;
-		}
+			}
 
-		/* Hover glow for verse label */
-		.verse-detector-view .verse-item b:hover {
+			/* Hover glow for verse label */
+			.verse-detector-view .verse-item b:hover {
 			opacity: 1;
 			text-shadow: 0 0 8px var(--interactive-accent);
-		}
+			}
 
-		/* Header styling */
-		.verse-detector-view h3 {
+			/* Sidebar header */
+			.verse-detector-view h3 {
 			color: var(--interactive-accent);
 			text-shadow: 0 0 2px var(--interactive-accent);
-			font-weight: 600;
+			font-weight: 400;
 			margin-top: 0;
 			margin-bottom: 6px;
 			text-align: center;
-		}
-
-		/* Refresh button container */
-		.verse-detector-view .refresh-button {
-			display: flex;
-			justify-content: flex-end;
-			margin-bottom: 6px;
-		}
-
-		/* Glow pulse animation for refresh button */
-		.verse-detector-view .refresh-button button {
-			animation: softGlow 2.5s ease-in-out infinite alternate;
-		}
-
-		@keyframes softGlow {
-			from {
-				filter: drop-shadow(0 0 2px var(--interactive-accent));
 			}
-			to {
-				filter: drop-shadow(0 0 8px var(--interactive-accent));
-			}
-		}
 
-		/* 🔆 Flash highlight for verse in editor when jumped to */
-		.verse-highlight {
+			/* Flash highlight when jumping to verse */
+			.verse-highlight {
 			background-color: var(--interactive-accent);
 			opacity: 0.35;
 			animation: verseFlash 1.2s ease-out;
-		}
+			}
 
-		@keyframes verseFlash {
+			@keyframes verseFlash {
 			0% {
 				background-color: var(--interactive-accent);
 				opacity: 0.6;
@@ -107,13 +106,38 @@ export default class VerseFormatter extends Plugin {
 				background-color: transparent;
 				opacity: 0;
 			}
-		}
+			}
 
-		.verse-highlight {
-  		background-color: var(--interactive-accent);
-  		opacity: 0.35;
-		}
-	`;
+			/* ==== Top Control Row ==== */
+			.verse-detector-view .top-controls {
+			display: flex;
+			justify-content: space-between; /* Undo left, Refresh right */
+			align-items: center;
+			margin-bottom: 6px;
+			padding: 2px 4px;
+			}
+
+			/* Button containers inside top-controls */
+			.verse-detector-view .top-controls .undo-button,
+			.verse-detector-view .top-controls .refresh-button {
+			display: flex;
+			}
+
+			/* Undo & Refresh buttons glow & pulse (already inherited) */
+			.verse-detector-view .top-controls button {
+			filter: drop-shadow(0 0 2px var(--interactive-accent));
+			transition: filter 0.2s ease, transform 0.1s ease;
+			animation: softGlow 2.5s ease-in-out infinite alternate;
+			}
+
+			/* Hover glow & scale for top controls */
+			.verse-detector-view .top-controls button:hover {
+			filter: drop-shadow(0 0 2px var(--interactive-accent));
+			transform: scale(1.1);
+			}
+
+
+		`;
 
 		document.head.appendChild(style);
 

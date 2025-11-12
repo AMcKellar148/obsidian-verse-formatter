@@ -56,19 +56,33 @@ function parseBookAndChapVerse(text: string): { book: string; chapVerse: string 
 
 /** 1️⃣ Link single verse */
 export function linkSingleVerse(text: string): string {
-  const { book, chapVerse } = parseBookAndChapVerse(text);
-  const fullBook = getFullBookName(book);
-  const useAlias = book.trim().toLowerCase() !== fullBook.toLowerCase();
+  // 1️⃣ Check for written-out verses
+  const writtenVerseRegex = /\b((?:[1-3]|I{1,3})?\s?[A-Za-z.]+(?:\s(?:of|the)\s[A-Za-z]+)?)\s+(?:chapter|chap\.?|ch\.?)\s*(\d{1,3})\s*,?\s*(?:verse|v\.?|vs\.?|v)\s*(\d{1,3})/i;
+  const match = text.match(writtenVerseRegex);
 
-  const match = chapVerse.match(/^(\d+):(\d+)$/);
-  if (!match) return text;
+  if (match) {
+    const book = match[1];
+    const chapter = match[2];
+    const verse = match[3];
+    const target = `${book} ${chapter}.${verse}`;
+    return `[[${target}|${text}]]`; // alias is the original text
+  }
 
-  const [, chapter, verseNum] = match;
-  const target = `${fullBook} ${chapter}.${verseNum}`;
+  // 2️⃣ Fallback to numeric style
+  const { book: bookName, chapVerse } = parseBookAndChapVerse(text);
+  const fullBook = getFullBookName(bookName);
+  const useAlias = bookName.trim().toLowerCase() !== fullBook.toLowerCase();
+
+  const numericMatch = chapVerse.match(/^(\d+):(\d+)$/);
+  if (!numericMatch) return text;
+
+  const [, chapterNum, verseNum] = numericMatch;
+  const target = `${fullBook} ${chapterNum}.${verseNum}`;
   return useAlias
-    ? `[[${target}|${book} ${chapter}.${verseNum}]]`
+    ? `[[${target}|${bookName} ${chapterNum}.${verseNum}]]`
     : `[[${target}]]`;
 }
+
 
 /** 2️⃣ Embed single verse — only the heading section */
 export function embedSingleVerse(verse: string): string {
