@@ -1,19 +1,11 @@
-import {
-  ItemView,
-  WorkspaceLeaf,
-  ButtonComponent,
-  Notice,
-} from "obsidian";
-
+import { ItemView, WorkspaceLeaf, ButtonComponent, Notice } from "obsidian";
 import {
   linkSingleVerse,
   embedSingleVerse,
   linkVerseRange,
   embedVerseRange,
+  bibleBooks
 } from "./verseFormatter";
-
-const verseRegex =
-  /\b((?:[1-3]|I{1,3})?\s?[A-Za-z.]+(?:\s(?:of|the)\s[A-Za-z]+)?)\s+(\d+[.:]\d+(?:\s*-\s*\d+)?)/g;
 
 interface DetectedVerse {
   text: string;
@@ -33,14 +25,11 @@ export class VerseDetectorView extends ItemView {
 
   getViewType() { return "verse-detector-view"; }
   getDisplayText() { return "Bible Verse Detector"; }
-  getIcon(): string {
-    return "book-open"; // same as the ribbon icon
-}
+  getIcon(): string { return "book-open"; }
 
   async onOpen() {
     const editor = this.plugin.app.workspace.activeEditor?.editor;
     if (!editor) return;
-
     this.renderSidebar(editor);
   }
 
@@ -49,20 +38,20 @@ export class VerseDetectorView extends ItemView {
     container.empty();
   }
 
-  addRefreshButton(editor: any) {
-    const container = this.containerEl.children[1];
-    const refreshEl = container.createEl("div", { cls: "refresh-button" });
-    new ButtonComponent(refreshEl)
-      .setIcon("refresh-cw")
-      .setTooltip("Refresh detected verses")
-      .onClick(() => {
-        this.updateDetectedVerses(editor);
-        this.renderSidebar(editor);
-        new Notice("Verse detection refreshed!");
-      });
+  private getBookPattern(): string {
+    return bibleBooks
+      .flatMap(b => [b.name, ...b.abbr])
+      .map(b => b.replace(/\./g, "\\."))
+      .join("|");
   }
 
   updateDetectedVerses(editor: any) {
+    const bookPattern = this.getBookPattern();
+    const verseRegex = new RegExp(
+      `\\b(${bookPattern})\\s+(\\d{1,3}[.:]\\d{1,3}(?:\\s*-\\s*\\d{1,3})?)`,
+      "gi"
+    );
+
     const text = editor.getValue();
     const matches: DetectedVerse[] = [];
 
@@ -81,14 +70,24 @@ export class VerseDetectorView extends ItemView {
     this.detectedVerses = matches;
   }
 
+  addRefreshButton(editor: any) {
+    const container = this.containerEl.children[1];
+    const refreshEl = container.createEl("div", { cls: "refresh-button" });
+    new ButtonComponent(refreshEl)
+      .setIcon("refresh-cw")
+      .setTooltip("Refresh detected verses")
+      .onClick(() => {
+        this.updateDetectedVerses(editor);
+        this.renderSidebar(editor);
+        new Notice("Verse detection refreshed!");
+      });
+  }
+
   renderSidebar(editor: any) {
     const container = this.containerEl.children[1];
     container.empty();
 
-    // Add refresh button at the top
     this.addRefreshButton(editor);
-
-    // Update verse detection
     this.updateDetectedVerses(editor);
 
     if (this.detectedVerses.length === 0) {
@@ -100,30 +99,51 @@ export class VerseDetectorView extends ItemView {
 
     this.detectedVerses.forEach((verse) => {
       const refEl = container.createEl("div", { cls: "verse-item" });
-      refEl.createEl("b", { text: verse.text });
+
+      // Clickable verse label
+      const refLabel = refEl.createEl("b", { text: verse.text });
+      refLabel.style.cursor = "pointer";
+
+      refLabel.addEventListener("click", () => {
+        const from = editor.offsetToPos(verse.start);
+        const to = editor.offsetToPos(verse.end);
+
+        // Set cursor at verse start
+        editor.setCursor(from);
+
+        // Scroll roughly to middle of screen
+        editor.scrollIntoView({ from, to }, true);
+
+        // Optional manual centering for CodeMirror
+        const cm = editor.cm as any;
+        if (cm && cm.display) {
+          const line = from.line;
+          const coords = cm.charCoords({ line, ch: 0 }, "local");
+          const halfHeight = cm.getScrollerElement().clientHeight / 2;
+          cm.scrollTo(null, coords.top - halfHeight + 10);
+        }
+
+        new Notice(`Jumped to: ${verse.text}`);
+      });
 
       const isRange = verse.text.includes("-");
 
       if (!isRange) {
-        // Link single verse
         new ButtonComponent(refEl)
           .setIcon("link-2")
           .setTooltip(linkSingleVerse(verse.text))
           .onClick(() => this.replaceInEditor(editor, verse, linkSingleVerse(verse.text)));
 
-        // Embed single verse
         new ButtonComponent(refEl)
           .setIcon("rectangle-horizontal")
           .setTooltip(embedSingleVerse(verse.text))
           .onClick(() => this.replaceInEditor(editor, verse, embedSingleVerse(verse.text)));
       } else {
-        // Link verse range
         new ButtonComponent(refEl)
           .setIcon("link")
           .setTooltip(linkVerseRange(verse.text))
           .onClick(() => this.replaceInEditor(editor, verse, linkVerseRange(verse.text)));
 
-        // Embed verse range
         new ButtonComponent(refEl)
           .setIcon("rows-3")
           .setTooltip(embedVerseRange(verse.text))
@@ -133,12 +153,17 @@ export class VerseDetectorView extends ItemView {
   }
 
   replaceInEditor(editor: any, verse: DetectedVerse, replacement: string) {
-    const text = editor.getValue();
-    const before = text.slice(0, verse.start);
-    const after = text.slice(verse.end);
-    editor.setValue(before + replacement + after);
+    editor.replaceRange(
+      replacement,
+      editor.offsetToPos(verse.start),
+      editor.offsetToPos(verse.end)
+    );
 
-    // Recalculate positions after text change
+    // Keep cursor at end of inserted text and scroll it into view
+    const endPos = editor.offsetToPos(verse.start + replacement.length);
+    editor.setCursor(endPos);
+    editor.scrollIntoView({ from: editor.offsetToPos(verse.start), to: endPos }, true);
+
     this.updateDetectedVerses(editor);
     this.renderSidebar(editor);
 

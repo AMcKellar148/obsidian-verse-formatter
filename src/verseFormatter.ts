@@ -118,18 +118,27 @@ export function linkVerseRange(text: string): string {
 /** 4️⃣ Embed verse range — each one to its own heading */
 export function embedVerseRange(range: string): string {
   const verses = splitVerseRange(range);
-  const embedded = verses.map((v) => embedSingleVerse(v));
+  const embedded = verses.map((v) => {
+    const formatted = linkSingleVerse(v);
+    const inner = formatted.slice(2, -2);
+
+    // Handle alias and target
+    if (inner.includes("|")) {
+      const [target, alias] = inner.split("|");
+      return `![[${target}#${target}|${alias}]]`;
+    } else {
+      return `![[${inner}#${inner}]]`;
+    }
+  });
+
   return embedded.join("\n"); // each embedded verse on its own line
 }
 
 // Helper to split verse range into individual verses
 function splitVerseRange(range: string): string[] {
-  // Normalize spaces around dash
-  const normalized = range.replace(/\s*-\s*/, "-");
-
-  // Match "Book Chapter.Start-End"
-  const match = normalized.match(/^(.+?)\s(\d+)\.(\d+)-(\d+)$/);
-  if (!match) return [range]; // fallback if not a valid range
+  const normalized = range.replace(/\s*-\s*/, "-").replace(/\./g, ":");
+  const match = normalized.match(/^(.+?)\s(\d+):(\d+)-(\d+)$/);
+  if (!match) return [range]; // fallback if not valid range
 
   const [, book, chapterStr, startVerseStr, endVerseStr] = match;
   const chapter = parseInt(chapterStr);
@@ -138,7 +147,7 @@ function splitVerseRange(range: string): string[] {
 
   const verses: string[] = [];
   for (let v = startVerse; v <= endVerse; v++) {
-    verses.push(`${book} ${chapter}.${v}`);
+    verses.push(`${book} ${chapter}:${v}`);
   }
 
   return verses;

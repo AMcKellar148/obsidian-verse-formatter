@@ -18,20 +18,30 @@ export default class VerseFormatter extends Plugin {
 			transition: filter 0.2s ease, transform 0.1s ease;
 		}
 
+		/* Glow & pulse for hover */
 		.verse-detector-view .verse-item button:hover svg,
 		.verse-detector-view .refresh-button button:hover svg {
 			filter: drop-shadow(0 0 6px var(--interactive-accent));
 			transform: scale(1.1);
 		}
 
+		/* Verse list item layout */
 		.verse-detector-view .verse-item {
 			display: flex;
 			align-items: center;
-			gap: 4px;
-			margin-bottom: 2px;
-			padding: 2px 0;
+			gap: 6px;
+			margin-bottom: 3px;
+			padding: 3px 4px;
+			border-radius: 6px;
+			transition: background 0.2s ease;
 		}
 
+		/* Hover background to make rows feel clickable */
+		.verse-detector-view .verse-item:hover {
+			background-color: var(--background-modifier-hover);
+		}
+
+		/* Verse label (text) */
 		.verse-detector-view .verse-item b {
 			flex: 1;
 			font-weight: 500;
@@ -39,20 +49,71 @@ export default class VerseFormatter extends Plugin {
 			overflow: hidden;
 			text-overflow: ellipsis;
 			color: var(--interactive-accent);
-			opacity: 0.5; /* lighter accent color */
+			opacity: 0.55; /* lighter accent tone */
+			cursor: pointer;
+			transition: all 0.25s ease;
 		}
 
+		/* Hover glow for verse label */
+		.verse-detector-view .verse-item b:hover {
+			opacity: 1;
+			text-shadow: 0 0 8px var(--interactive-accent);
+		}
+
+		/* Header styling */
+		.verse-detector-view h3 {
+			color: var(--interactive-accent);
+			text-shadow: 0 0 2px var(--interactive-accent);
+			font-weight: 600;
+			margin-top: 0;
+			margin-bottom: 6px;
+			text-align: center;
+		}
+
+		/* Refresh button container */
 		.verse-detector-view .refresh-button {
 			display: flex;
 			justify-content: flex-end;
-			margin-bottom: 4px;
+			margin-bottom: 6px;
 		}
 
-		.verse-detector-view h3 {
-			color: var(--interactive-accent);
-			text-shadow: 0 0 1px var(--interactive-accent);
+		/* Glow pulse animation for refresh button */
+		.verse-detector-view .refresh-button button {
+			animation: softGlow 2.5s ease-in-out infinite alternate;
 		}
-		`;
+
+		@keyframes softGlow {
+			from {
+				filter: drop-shadow(0 0 2px var(--interactive-accent));
+			}
+			to {
+				filter: drop-shadow(0 0 8px var(--interactive-accent));
+			}
+		}
+
+		/* 🔆 Flash highlight for verse in editor when jumped to */
+		.verse-highlight {
+			background-color: var(--interactive-accent);
+			opacity: 0.35;
+			animation: verseFlash 1.2s ease-out;
+		}
+
+		@keyframes verseFlash {
+			0% {
+				background-color: var(--interactive-accent);
+				opacity: 0.6;
+			}
+			100% {
+				background-color: transparent;
+				opacity: 0;
+			}
+		}
+
+		.verse-highlight {
+  		background-color: var(--interactive-accent);
+  		opacity: 0.35;
+		}
+	`;
 
 		document.head.appendChild(style);
 
