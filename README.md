@@ -1,22 +1,47 @@
-# Verse Formatter Plugin for Obsidian
+{{ ... }}
 
 Automatically detects Bible references in your notes and allows you to link or embed them in Obsidian.
 
 ## Features
 
-- Detects single verses and verse ranges.
-- Link verses to their own notes (`[[Romans 1.1]]`).
-- Embed verses (`![[Romans 1.1#Romans 1.1]]`) with optional alias.
-- Automatically highlights detected verses in a side pane.
-- Supports left-hand ribbon icon for quick detection.
-- Handles abbreviations and full book names.
+- **Smart Detection:** Detects single verses, ranges, and lists.
+- **Flexible Formats:** Supports various reference styles including "and", "&", comma-separated lists, and more.
+- **Link & Embed:** Easily convert references to links (`[[Romans 1.1]]`) or embeds (`![[Romans 1.1#Romans 1.1]]`).
+- **Sidebar View:** Automatically highlights detected verses in a side pane for quick formatting.
+- **Custom Templates:** Define your own link format (e.g., `[[{book} {chapter}:{verse}]]`).
+- **Ribbon Icon:** Quick access to the detection sidebar.
+
+## Supported Formats
+
+The plugin is designed to be flexible and forgiving. It supports:
+
+- **Standard:** `Romans 1:1`, `Romans 1:1-3`
+- **Ranges with "and" / "&":** `Romans 1:1 and 2`, `Romans 1:1 & 2`
+- **Comma-Separated Lists:** `Romans 8:1, 3, 5`, `Romans 8, 9, 10`
+- **Chapter Only:** `Romans 8`, `Romans 8-10`
+- **Single-Chapter Books:** `Jude 9` (detects as Jude 1:9), `3 John 4`
+- **"Verse" Keyword:** `Acts 2 verse 42`, `Acts 2 v 42`, `Acts 2 vs 42`
+- **Missing Spaces:** `Colossians1.9` (detects as Colossians 1:9)
+
+## Settings
+
+### Custom Link Templates
+You can customize how verses are linked by enabling **Use Custom Template** in the settings.
+
+- **Placeholders:**
+    - `{book}`: Full book name (e.g., "Romans")
+    - `{chapter}`: Chapter number
+    - `{verse}`: Verse number
+    - `{original}`: The original text found in your note
+- **Example:** `[[{book} {chapter}:{verse}]]` will produce `[[Romans 1:1]]`.
 
 ## Commands
 
-- **Link Single Verse** – Converts a single reference into a note link.
-- **Embed Single Verse** – Embeds a single reference.
-- **Link Verse Range** – Converts a range of verses into separate links.
-- **Embed Verse Range** – Embeds a range of verses, one per line.
+- **Link Single Verse** – Converts selected text into a link.
+- **Embed Single Verse** – Embeds selected text.
+- **Link Verse Range** – Converts selected range/list into separate links.
+- **Embed Verse Range** – Embeds selected range/list, one per line.
+- **Detect Bible References** – Opens the sidebar view to find references in the current note.
 
 ## Installation
 
@@ -31,3 +56,4 @@ Automatically detects Bible references in your notes and allows you to link or e
 npm install
 npm run build       # Compile TypeScript to JS
 npm run dev         # Watch for changes while developing
+```

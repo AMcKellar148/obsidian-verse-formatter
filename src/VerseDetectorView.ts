@@ -50,9 +50,25 @@ export class VerseDetectorView extends ItemView {
     const text = editor.getValue();
     const matches: DetectedVerse[] = [];
 
-    // Numeric verses (Romans 1:1 or 1:1-3)
+    // 1. Identify ranges that are already inside [[links]] or ![[embeds]]
+    const linkRanges: { start: number; end: number }[] = [];
+    const linkRegex = /!?\[\[.*?\]\]/g;
+    let linkMatch;
+    while ((linkMatch = linkRegex.exec(text)) !== null) {
+      linkRanges.push({
+        start: linkMatch.index,
+        end: linkMatch.index + linkMatch[0].length,
+      });
+    }
+
+    // Helper to check if a range overlaps with any existing link
+    const isInsideLink = (start: number, end: number) => {
+      return linkRanges.some((range) => start >= range.start && end <= range.end);
+    };
+
+    // Numeric verses (Romans 1:1, 1:1-3, 1:1, 3, 5, Romans 8, 9, 10)
     const numericRegex = new RegExp(
-      `\\b(${this.getBookPattern()})\\s+(\\d{1,3}[.:]\\d{1,3}(?:\\s*-\\s*\\d{1,3})?)`,
+      `\\b(${this.getBookPattern()})\\s*(\\d{1,3}(?:(?:[.:]|\\s+(?:verse|v\\.?|vs\\.?)\\s+)\\d{1,3})?(?:\\s*(?:-|and|&|,)\\s*\\d{1,3})*)`,
       "gi"
     );
 
@@ -65,14 +81,12 @@ export class VerseDetectorView extends ItemView {
       const start = m.index!;
       const end = start + fullMatch.length;
 
-      const pattern = new RegExp(`\\[!?\\[.*${escapeRegExp(fullMatch)}.*\\]\\]`);
-
-      if (!pattern.test(text)) {
+      if (!isInsideLink(start, end)) {
         matches.push({
           text: `${m[1]} ${m[2]}`,
           originalText: fullMatch,
           start,
-          end
+          end,
         });
       }
     }
@@ -83,14 +97,12 @@ export class VerseDetectorView extends ItemView {
       const start = m.index!;
       const end = start + fullMatch.length;
 
-      const pattern = new RegExp(`\\[!?\\[.*${escapeRegExp(fullMatch)}.*\\]\\]`);
-
-      if (!pattern.test(text)) {
+      if (!isInsideLink(start, end)) {
         matches.push({
           text: `${m[1]} ${m[2]}.${m[3]}`, // normalized
-          originalText: fullMatch,         // actual written-out text
+          originalText: fullMatch, // actual written-out text
           start,
-          end
+          end,
         });
       }
     }
@@ -193,35 +205,35 @@ export class VerseDetectorView extends ItemView {
         new Notice(`Jumped to: ${verse.text}`);
       });
 
-      const isRange = verse.text.includes("-");
+      const isRange = /[-&,]| and /i.test(verse.text);
 
       if (!isRange) {
         new ButtonComponent(refEl)
           .setIcon("link-2")
-          .setTooltip(linkSingleVerse(verse.originalText))
+          .setTooltip(linkSingleVerse(verse.originalText, this.plugin.settings))
           .onClick(() =>
-            this.replaceInEditor(editor, verse, linkSingleVerse(verse.originalText))
+            this.replaceInEditor(editor, verse, linkSingleVerse(verse.originalText, this.plugin.settings))
           );
 
         new ButtonComponent(refEl)
           .setIcon("rectangle-horizontal")
-          .setTooltip(embedSingleVerse(verse.text))
+          .setTooltip(embedSingleVerse(verse.text, this.plugin.settings))
           .onClick(() =>
-            this.replaceInEditor(editor, verse, embedSingleVerse(verse.text))
+            this.replaceInEditor(editor, verse, embedSingleVerse(verse.text, this.plugin.settings))
           );
       } else {
         new ButtonComponent(refEl)
           .setIcon("link")
-          .setTooltip(linkVerseRange(verse.text))
+          .setTooltip(linkVerseRange(verse.text, this.plugin.settings))
           .onClick(() =>
-            this.replaceInEditor(editor, verse, linkVerseRange(verse.text))
+            this.replaceInEditor(editor, verse, linkVerseRange(verse.text, this.plugin.settings))
           );
 
         new ButtonComponent(refEl)
           .setIcon("rows-3")
-          .setTooltip(embedVerseRange(verse.text))
+          .setTooltip(embedVerseRange(verse.text, this.plugin.settings))
           .onClick(() =>
-            this.replaceInEditor(editor, verse, embedVerseRange(verse.text))
+            this.replaceInEditor(editor, verse, embedVerseRange(verse.text, this.plugin.settings))
           );
       }
     });
