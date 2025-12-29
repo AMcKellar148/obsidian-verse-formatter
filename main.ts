@@ -1,6 +1,6 @@
 import { App, ButtonComponent, Editor, ItemView, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
-import { linkSingleVerse, linkVerseRange, embedSingleVerse, embedVerseRange } from './src/verseFormatter';
-import { VerseDetectorView } from './src/VerseDetectorView';
+import type { VerseDetectorView } from './src/VerseDetectorView';
+
 import { VerseFormatterSettings, DEFAULT_SETTINGS, VerseFormatterSettingTab } from './src/settings';
 
 const VIEW_TYPE_VERSE = 'verse-detector-view';
@@ -14,7 +14,10 @@ export default class VerseFormatter extends Plugin {
 		await this.loadSettings();
 
 		// Register side view
-		this.registerView(VIEW_TYPE_VERSE, (leaf) => new VerseDetectorView(leaf, this));
+		this.registerView(VIEW_TYPE_VERSE, (leaf) => {
+			const { VerseDetectorView } = require('./src/VerseDetectorView');
+			return new VerseDetectorView(leaf, this);
+		});
 
 		// Command to open the verse detection pane
 		this.addCommand({
@@ -36,9 +39,15 @@ export default class VerseFormatter extends Plugin {
 				const view = existingLeaf.view as VerseDetectorView;
 				const editor = this.app.workspace.activeEditor?.editor;
 				if (view && editor) {
-					view.updateDetectedVerses(editor);
-					view.renderSidebar(editor);
-					new Notice("Verse detection refreshed!");
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					// const { VerseDetectorView } = require('./src/VerseDetectorView'); 
+					// We don't need to re-require for the instance method, but we cast it. 
+					// Ideally methods are available on the view object. 
+					if (typeof (view as any).updateDetectedVerses === 'function') {
+						(view as any).updateDetectedVerses(editor);
+						(view as any).renderSidebar(editor);
+						new Notice("Verse detection refreshed!");
+					}
 				}
 
 				return;
@@ -58,8 +67,10 @@ export default class VerseFormatter extends Plugin {
 			const newView = leaf.view as VerseDetectorView;
 			const editor = this.app.workspace.activeEditor?.editor;
 			if (editor) {
-				newView.updateDetectedVerses(editor);
-				newView.renderSidebar(editor);
+				if (typeof (newView as any).updateDetectedVerses === 'function') {
+					(newView as any).updateDetectedVerses(editor);
+					(newView as any).renderSidebar(editor);
+				}
 			}
 		});
 
@@ -73,6 +84,7 @@ export default class VerseFormatter extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const selection = editor.getSelection().trim();
 				if (!selection) return;
+				const { linkSingleVerse } = require('./src/verseFormatter');
 				editor.replaceSelection(linkSingleVerse(selection, this.settings));
 			},
 		});
@@ -84,6 +96,7 @@ export default class VerseFormatter extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const selection = editor.getSelection().trim();
 				if (!selection) return;
+				const { embedSingleVerse } = require('./src/verseFormatter');
 				editor.replaceSelection(embedSingleVerse(selection, this.settings));
 			},
 		});
@@ -95,6 +108,7 @@ export default class VerseFormatter extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const selection = editor.getSelection().trim();
 				if (!selection) return;
+				const { linkVerseRange } = require('./src/verseFormatter');
 				editor.replaceSelection(linkVerseRange(selection, this.settings));
 			},
 		});
@@ -106,6 +120,7 @@ export default class VerseFormatter extends Plugin {
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const selection = editor.getSelection().trim();
 				if (!selection) return;
+				const { embedVerseRange } = require('./src/verseFormatter');
 				editor.replaceSelection(embedVerseRange(selection, this.settings));
 			},
 		});

@@ -76,7 +76,7 @@ function isSingleChapterBook(bookName: string): boolean {
 }
 
 /** 1️⃣ Link single verse */
-export function linkSingleVerse(text: string, settings?: VerseFormatterSettings): string {
+export function linkSingleVerse(text: string, settings?: VerseFormatterSettings, originalText?: string): string {
   // Reuse the expansion logic for consistency, even for single verses
   const expanded = expandVerseList(text);
   if (expanded.length === 0) return text;
@@ -93,7 +93,7 @@ export function linkSingleVerse(text: string, settings?: VerseFormatterSettings)
   }
 
   const target = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
-  const alias = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
+  const alias = originalText || (verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`);
 
   // Let's stick to the standard format for consistency with the new logic
   return `[[${target}|${alias}]]`;

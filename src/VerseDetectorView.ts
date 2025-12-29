@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, ButtonComponent, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, ButtonComponent, Notice, debounce, TFile } from "obsidian";
 import {
   linkSingleVerse,
   embedSingleVerse,
@@ -7,21 +7,35 @@ import {
   bibleBooks
 } from "./verseFormatter";
 
-interface DetectedVerse {
-  text: string;
-  originalText: string;
-  start: number;
-  end: number;
-}
+import { VerseDetectorService, DetectedVerse } from "./VerseDetectorService";
 
 export class VerseDetectorView extends ItemView {
   plugin: any;
   detectedVerses: DetectedVerse[] = [];
+  private service: VerseDetectorService;
+  private debouncedUpdate: any;
+  private isLocked: boolean = false;
+  private lockedFile: TFile | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: any) {
     super(leaf);
     this.plugin = plugin;
     this.containerEl.addClass("verse-detector-view");
+    this.service = new VerseDetectorService();
+    this.refreshDebounce();
+  }
+
+  refreshDebounce() {
+    this.debouncedUpdate = debounce(
+      (editor: any) => {
+        if (this.plugin.settings.autoDetect) {
+          this.updateDetectedVerses(editor);
+          this.renderSidebar(editor);
+        }
+      },
+      this.plugin.settings.autoDetectDelay,
+      true
+    );
   }
 
   getViewType() { return "verse-detector-view"; }
@@ -29,8 +43,38 @@ export class VerseDetectorView extends ItemView {
   getIcon(): string { return "book-open"; }
 
   async onOpen() {
+    this.registerEvent(
+      this.app.workspace.on('editor-change', (editor, info) => {
+        if (this.debouncedUpdate) {
+          // If locked, only update if the editor belongs to the locked file
+          if (this.isLocked && this.lockedFile) {
+            const activeFile = this.app.workspace.activeEditor?.file;
+            if (activeFile && activeFile.path === this.lockedFile.path) {
+              this.debouncedUpdate(editor);
+            }
+          } else {
+            this.debouncedUpdate(editor);
+          }
+        }
+      })
+    );
+
+    this.registerEvent(
+      this.app.workspace.on('active-leaf-change', () => {
+        if (this.isLocked) return; // Don't switch if locked
+
+        const editor = this.plugin.app.workspace.activeEditor?.editor;
+        if (editor) {
+          this.updateDetectedVerses(editor);
+          this.renderSidebar(editor);
+        }
+      })
+    );
+
     const editor = this.plugin.app.workspace.activeEditor?.editor;
     if (!editor) return;
+
+    // Initialize lockedFile if needed (though logic starts unlocked)
     this.renderSidebar(editor);
   }
 
@@ -39,77 +83,9 @@ export class VerseDetectorView extends ItemView {
     container.empty();
   }
 
-  private getBookPattern(): string {
-    return bibleBooks
-      .flatMap(b => [b.name, ...b.abbr])
-      .map(b => b.replace(/\./g, "\\."))
-      .join("|");
-  }
-
   updateDetectedVerses(editor: any) {
     const text = editor.getValue();
-    const matches: DetectedVerse[] = [];
-
-    // 1. Identify ranges that are already inside [[links]] or ![[embeds]]
-    const linkRanges: { start: number; end: number }[] = [];
-    const linkRegex = /!?\[\[.*?\]\]/g;
-    let linkMatch;
-    while ((linkMatch = linkRegex.exec(text)) !== null) {
-      linkRanges.push({
-        start: linkMatch.index,
-        end: linkMatch.index + linkMatch[0].length,
-      });
-    }
-
-    // Helper to check if a range overlaps with any existing link
-    const isInsideLink = (start: number, end: number) => {
-      return linkRanges.some((range) => start >= range.start && end <= range.end);
-    };
-
-    // Numeric verses (Romans 1:1, 1:1-3, 1:1, 3, 5, Romans 8, 9, 10)
-    const numericRegex = new RegExp(
-      `\\b(${this.getBookPattern()})\\s*(\\d{1,3}(?:(?:[.:]|\\s+(?:verse|v\\.?|vs\\.?)\\s+)\\d{1,3})?(?:\\s*(?:-|and|&|,)\\s*\\d{1,3})*)`,
-      "gi"
-    );
-
-    // Written-out verses (Romans chapter 1, verse 1)
-    const writtenRegex = /\b((?:[1-3]|I{1,3})?\s?[A-Za-z.]+(?:\s(?:of|the)\s[A-Za-z]+)?)\s+(?:chapter|chap\.?|ch\.?)\s*(\d{1,3})\s*,?\s*(?:verse|v\.?|vs\.?|v)\s*(\d{1,3})\.?/gi;
-
-    // Numeric verses
-    for (const m of text.matchAll(numericRegex)) {
-      const fullMatch = m[0];
-      const start = m.index!;
-      const end = start + fullMatch.length;
-
-      if (!isInsideLink(start, end)) {
-        matches.push({
-          text: `${m[1]} ${m[2]}`,
-          originalText: fullMatch,
-          start,
-          end,
-        });
-      }
-    }
-
-    // Written-out verses
-    for (const m of text.matchAll(writtenRegex)) {
-      const fullMatch = m[0];
-      const start = m.index!;
-      const end = start + fullMatch.length;
-
-      if (!isInsideLink(start, end)) {
-        matches.push({
-          text: `${m[1]} ${m[2]}.${m[3]}`, // normalized
-          originalText: fullMatch, // actual written-out text
-          start,
-          end,
-        });
-      }
-    }
-
-    // Keep order of appearance
-    matches.sort((a, b) => a.start - b.start);
-    this.detectedVerses = matches;
+    this.detectedVerses = this.service.detectVerses(text);
   }
 
   addUndoButton(editor: any, container: HTMLElement) {
@@ -143,34 +119,80 @@ export class VerseDetectorView extends ItemView {
     const container = this.containerEl.children[1];
     container.empty();
 
-    // 🔹 Top row container for Undo (left) and Refresh (right)
-    const topRow = container.createEl("div", { cls: "top-controls" });
+    // 🔹 Header with Refresh and Undo
+    const controlsRow = container.createEl("div", { cls: "view-header nav-header" });
+    controlsRow.style.display = "flex";
+    controlsRow.style.justifyContent = "space-between";
+    controlsRow.style.alignItems = "center";
+    controlsRow.style.padding = "10px 5px";
+    controlsRow.style.marginBottom = "5px";
 
-    // Undo button container (left)
-    const undoEl = topRow.createEl("div", { cls: "undo-button" });
-    new ButtonComponent(undoEl)
+    // Undo button
+    const leftControls = controlsRow.createEl("div", { cls: "nav-buttons-container" });
+    const undoBtn = new ButtonComponent(leftControls)
       .setIcon("undo-2")
       .setTooltip("Undo last verse formatting")
       .onClick(() => {
-        editor.undo(); // Use editor's native undo
-        this.updateDetectedVerses(editor); // re-run detection
-        this.renderSidebar(editor); // update sidebar
+        editor.undo();
+        this.updateDetectedVerses(editor);
+        this.renderSidebar(editor);
         new Notice("Undid last action");
       });
+    undoBtn.buttonEl.addClass("header-icon-btn");
 
-    // Refresh button container (right)
-    const refreshEl = topRow.createEl("div", { cls: "refresh-button" });
-    new ButtonComponent(refreshEl)
+    // File Name Header
+    // Determine displayed filename
+    let displayFileName = "No File";
+    if (this.isLocked && this.lockedFile) {
+      displayFileName = this.lockedFile.basename;
+    } else {
+      const activeFile = this.plugin.app.workspace.getActiveFile();
+      if (activeFile) displayFileName = activeFile.basename;
+    }
+
+    const titleEl = controlsRow.createEl("div", { cls: "view-header-title" });
+    titleEl.setText(displayFileName);
+    titleEl.style.fontWeight = "bold";
+    // titleEl.style.flexGrow = "1";
+    // titleEl.style.textAlign = "center";
+
+    // Right Controls (Lock + Refresh)
+    const rightControls = controlsRow.createEl("div", { cls: "nav-buttons-container" });
+
+    // Lock Button
+    const lockBtn = new ButtonComponent(rightControls)
+      .setIcon(this.isLocked ? "lock" : "unlock")
+      .setTooltip(this.isLocked ? "Unlock view" : "Lock view to this note")
+      .onClick(() => {
+        this.isLocked = !this.isLocked;
+        if (this.isLocked) {
+          // Lock to current
+          this.lockedFile = this.plugin.app.workspace.getActiveFile();
+          new Notice(`Locked to ${this.lockedFile ? this.lockedFile.basename : 'current file'}`);
+        } else {
+          this.lockedFile = null;
+          new Notice("Unlocked");
+        }
+        this.renderSidebar(editor);
+      });
+    lockBtn.buttonEl.addClass("header-icon-btn");
+    if (this.isLocked) lockBtn.buttonEl.addClass("is-active");
+
+    // Refresh button
+    const refreshBtn = new ButtonComponent(rightControls)
       .setIcon("refresh-cw")
       .setTooltip("Refresh detected verses")
       .onClick(() => {
+        // Re-create debounce in case settings changed
+        this.refreshDebounce();
         this.updateDetectedVerses(editor);
         this.renderSidebar(editor);
         new Notice("Verse detection refreshed!");
       });
+    refreshBtn.buttonEl.addClass("header-icon-btn");
 
-    // 🔹 Update verses
-    this.updateDetectedVerses(editor);
+
+    // 🔹 Update verses logic check (already updated, just rendering list)
 
     if (this.detectedVerses.length === 0) {
       container.createEl("p", { text: "No unformatted Bible references found." });
@@ -179,7 +201,12 @@ export class VerseDetectorView extends ItemView {
 
     container.createEl("h3", { text: "Detected Bible References" });
 
-    this.detectedVerses.forEach((verse) => {
+    // Limit verses
+    const maxVerses = this.plugin.settings.maxVerses || 50;
+    const versusToShow = this.detectedVerses.slice(0, maxVerses);
+    const hiddenCount = this.detectedVerses.length - maxVerses;
+
+    versusToShow.forEach((verse) => {
       const refEl = container.createEl("div", { cls: "verse-item" });
 
       // Clickable verse label
@@ -210,9 +237,9 @@ export class VerseDetectorView extends ItemView {
       if (!isRange) {
         new ButtonComponent(refEl)
           .setIcon("link-2")
-          .setTooltip(linkSingleVerse(verse.originalText, this.plugin.settings))
+          .setTooltip(linkSingleVerse(verse.text, this.plugin.settings, verse.originalText))
           .onClick(() =>
-            this.replaceInEditor(editor, verse, linkSingleVerse(verse.originalText, this.plugin.settings))
+            this.replaceInEditor(editor, verse, linkSingleVerse(verse.text, this.plugin.settings, verse.originalText))
           );
 
         new ButtonComponent(refEl)
@@ -237,9 +264,19 @@ export class VerseDetectorView extends ItemView {
           );
       }
     });
+
+    if (hiddenCount > 0) {
+      container.createEl("div", {
+        text: `... and ${hiddenCount} more verses`,
+        cls: "more-verses-msg"
+      }).style.fontStyle = "italic";
+    }
   }
 
   replaceInEditor(editor: any, verse: DetectedVerse, replacement: string) {
+    // DEBUG: Check what text is being used
+    // new Notice(`Debug: Formatting '${verse.text}' -> '${replacement}'`);
+
     const startPos = editor.offsetToPos(verse.start);
     const endPos = editor.offsetToPos(verse.end);
 
@@ -249,8 +286,10 @@ export class VerseDetectorView extends ItemView {
     editor.setCursor(newEndPos);
     editor.scrollIntoView({ from: startPos, to: newEndPos }, true);
 
-    this.updateDetectedVerses(editor);
-    this.renderSidebar(editor);
+    // Wait for editor to update before refreshing
+    setTimeout(() => {
+      this.renderSidebar(editor);
+    }, 100);
 
     new Notice(`Formatted: ${verse.text}`);
   }

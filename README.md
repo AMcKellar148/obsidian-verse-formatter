@@ -5,9 +5,12 @@ Automatically detects Bible references in your notes and allows you to link or e
 ## Features
 
 - **Smart Detection:** Detects single verses, ranges, and lists.
+- **Auto-Detect:** Automatically detects verses as you type (debounced).
+- **File Lock:** Pin the detection view to a specific file so it doesn't switch when you change tabs.
+- **Intelligent Aliasing:** Preserves original text (e.g., "Ephesians chapter 5") as the link alias.
 - **Flexible Formats:** Supports various reference styles including "and", "&", comma-separated lists, and more.
 - **Link & Embed:** Easily convert references to links (`[[Romans 1.1]]`) or embeds (`![[Romans 1.1#Romans 1.1]]`).
-- **Sidebar View:** Automatically highlights detected verses in a side pane for quick formatting.
+- **Sidebar View:** Automatically highlights detected verses with Undo and Refresh controls.
 - **Custom Templates:** Define your own link format (e.g., `[[{book} {chapter}:{verse}]]`).
 - **Ribbon Icon:** Quick access to the detection sidebar.
 
@@ -34,6 +37,11 @@ You can customize how verses are linked by enabling **Use Custom Template** in t
     - `{verse}`: Verse number
     - `{original}`: The original text found in your note
 - **Example:** `[[{book} {chapter}:{verse}]]` will produce `[[Romans 1:1]]`.
+
+### Auto-Detection & Performance
+- **Auto-Detect Verses:** Toggle automatic detection on/off.
+- **Auto-Detect Delay:** Set the delay (in ms) before detection runs (default: 1000ms).
+- **Max Verses per Page:** Limit the number of verses displayed in the sidebar to improve performance (default: 50).
 
 ## Commands
 

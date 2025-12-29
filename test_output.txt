@@ -1,0 +1,62 @@
+
+> obsidian-verse-formatter-plugin@1.0.0 test
+> jest
+
+FAIL tests/VerseDetectorService.test.ts
+  ΓùÅ VerseDetectorService ΓÇ║ detects written-out verses and normalizes them
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Ephesians 5.8"
+    Received: " Ephesians 5.8"
+
+      50 |         const verses = service.detectVerses(text);
+      51 |         expect(verses).toHaveLength(1);
+    > 52 |         expect(verses[0].text).toBe("Ephesians 5.8"); // Normalized
+         |                                ^
+      53 |         expect(verses[0].originalText).toContain("Ephesians chapter 5, verse 8");
+      54 |     });
+      55 |
+
+      at Object.<anonymous> (tests/VerseDetectorService.test.ts:52:32)
+
+FAIL tests/verseFormatter.test.ts
+  ΓùÅ verseFormatter ΓÇ║ linkSingleVerse ΓÇ║ links a simple verse
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "[[John 3.16|John 3:16]]"
+    Received: "[[John 3.16|John 3.16]]"
+
+       5 |     describe('linkSingleVerse', () => {
+       6 |         test('links a simple verse', () => {
+    >  7 |             expect(linkSingleVerse('John 3:16')).toBe('[[John 3.16|John 3:16]]');
+         |                                                  ^
+       8 |         });
+       9 |
+      10 |         test('preserves original text as alias', () => {
+
+      at Object.<anonymous> (tests/verseFormatter.test.ts:7:50)
+
+  ΓùÅ verseFormatter ΓÇ║ linkSingleVerse ΓÇ║ handles numbered books
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "[[1 John 1.9|1 John 1:9]]"
+    Received: "[[1 John 1.9|1 John 1.9]]"
+
+      13 |
+      14 |         test('handles numbered books', () => {
+    > 15 |             expect(linkSingleVerse('1 John 1:9')).toBe('[[1 John 1.9|1 John 1:9]]');
+         |                                                   ^
+      16 |         });
+      17 |     });
+      18 |
+
+      at Object.<anonymous> (tests/verseFormatter.test.ts:15:51)
+
+Test Suites: 2 failed, 2 total
+Tests:       3 failed, 9 passed, 12 total
+Snapshots:   0 total
+Time:        0.782 s, estimated 1 s
+Ran all test suites.

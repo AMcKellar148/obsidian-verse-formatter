@@ -1,34 +1,42 @@
 /* ==== Verse Detector Sidebar ==== */
 
-/* Verse item buttons, Refresh & Undo buttons */
-.verse-detector-view .verse-item button,
-.verse-detector-view .refresh-button button,
-.verse-detector-view .undo-button button {
+/* Verse item buttons */
+.verse-detector-view .verse-item button {
   filter: drop-shadow(0 0 2px var(--interactive-accent));
   transition: filter 0.2s ease, transform 0.1s ease;
 }
 
-/* Glow & scale on hover for all buttons */
-.verse-detector-view .verse-item button:hover,
-.verse-detector-view .refresh-button button:hover,
-.verse-detector-view .undo-button button:hover {
+/* Glow & scale on hover for verse buttons */
+.verse-detector-view .verse-item button:hover {
   filter: drop-shadow(0 0 2px var(--interactive-accent));
   transform: scale(1.1);
 }
 
-/* Soft pulse animation for Refresh & Undo */
-.verse-detector-view .refresh-button button,
-.verse-detector-view .undo-button button {
-  animation: softGlow 2.5s ease-in-out infinite alternate;
+/* Header Icon Buttons (Lock, Refresh, Undo) */
+.verse-detector-view .header-icon-btn {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px;
+  height: auto;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.1s ease;
 }
 
-@keyframes softGlow {
-  from {
-    filter: drop-shadow(0 0 2px var(--interactive-accent));
-  }
-  to {
-    filter: drop-shadow(0 0 8px var(--interactive-accent));
-  }
+/* Maintain glow logic for consistency if desired, or simpler hover */
+.verse-detector-view .header-icon-btn:hover {
+    color: var(--interactive-accent);
+    transform: scale(1.1);
+    background-color: transparent; /* Ensure no bg on hover */
+    box-shadow: none;
+    text-shadow: 0 0 5px var(--interactive-accent); /* Subtle text glow */
+}
+
+/* Active state for Lock button */
+.verse-detector-view .header-icon-btn.is-active {
+    color: var(--interactive-accent);
+    text-shadow: 0 0 2px var(--interactive-accent);
 }
 
 /* Verse list items */
@@ -94,30 +102,16 @@
   }
 }
 
-/* ==== Top Control Row ==== */
-.verse-detector-view .top-controls {
-  display: flex;
-  justify-content: space-between; /* Undo left, Refresh right */
-  align-items: center;
-  margin-bottom: 6px;
-  padding: 2px 4px;
+/* Active File Header Text */
+.verse-detector-view .view-header-title {
+    font-size: 0.9em;
+    color: var(--text-normal);
+    opacity: 0.9;
 }
 
-/* Button containers inside top-controls */
-.verse-detector-view .top-controls .undo-button,
-.verse-detector-view .top-controls .refresh-button {
-  display: flex;
-}
-
-/* Undo & Refresh buttons glow & pulse (already inherited) */
-.verse-detector-view .top-controls button {
-  filter: drop-shadow(0 0 2px var(--interactive-accent));
-  transition: filter 0.2s ease, transform 0.1s ease;
-  animation: softGlow 2.5s ease-in-out infinite alternate;
-}
-
-/* Hover glow & scale for top controls */
-.verse-detector-view .top-controls button:hover {
-  filter: drop-shadow(0 0 2px var(--interactive-accent));
-  transform: scale(1.1);
+.more-verses-msg {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin-top: 10px;
 }

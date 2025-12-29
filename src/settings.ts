@@ -3,11 +3,17 @@ import { App, PluginSettingTab, Setting, Plugin } from 'obsidian';
 export interface VerseFormatterSettings {
     useCustomTemplate: boolean;
     template: string;
+    autoDetect: boolean;
+    autoDetectDelay: number;
+    maxVerses: number;
 }
 
 export const DEFAULT_SETTINGS: VerseFormatterSettings = {
     useCustomTemplate: false,
-    template: "[[{book} {chapter}.{verse}]]"
+    template: "[[{book} {chapter}.{verse}]]",
+    autoDetect: true,
+    autoDetectDelay: 1000,
+    maxVerses: 50
 }
 
 export class VerseFormatterSettingTab extends PluginSettingTab {
@@ -50,5 +56,43 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     }));
         }
+
+        new Setting(containerEl)
+            .setName('Auto-Detect Verses')
+            .setDesc('Automatically detect verses when you stop typing.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoDetect)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoDetect = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Auto-Detect Delay (ms)')
+            .setDesc('How long to wait after typing before detecting verses (1000ms = 1 second).')
+            .addText(text => text
+                .setPlaceholder('1000')
+                .setValue(String(this.plugin.settings.autoDetectDelay))
+                .onChange(async (value) => {
+                    const parsed = parseInt(value);
+                    if (!isNaN(parsed)) {
+                        this.plugin.settings.autoDetectDelay = parsed;
+                        await this.plugin.saveSettings();
+                    }
+                }));
+
+        new Setting(containerEl)
+            .setName('Maximum Verses to Display')
+            .setDesc('Limit the number of verses shown in the detection panel for performance.')
+            .addText(text => text
+                .setPlaceholder('50')
+                .setValue(String(this.plugin.settings.maxVerses))
+                .onChange(async (value) => {
+                    const parsed = parseInt(value);
+                    if (!isNaN(parsed)) {
+                        this.plugin.settings.maxVerses = parsed;
+                        await this.plugin.saveSettings();
+                    }
+                }));
     }
 }
