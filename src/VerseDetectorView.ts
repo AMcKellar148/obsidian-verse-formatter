@@ -16,6 +16,8 @@ export class VerseDetectorView extends ItemView {
   private debouncedUpdate: any;
   private isLocked: boolean = false;
   private lockedFile: TFile | null = null;
+  private currentVerseIndex: number = 0;
+  private skippedVerses: Set<number> = new Set();
 
   constructor(leaf: WorkspaceLeaf, plugin: any) {
     super(leaf);
@@ -206,12 +208,52 @@ export class VerseDetectorView extends ItemView {
     const versusToShow = this.detectedVerses.slice(0, maxVerses);
     const hiddenCount = this.detectedVerses.length - maxVerses;
 
-    versusToShow.forEach((verse) => {
+    versusToShow.forEach((verse, index) => {
       const refEl = container.createEl("div", { cls: "verse-item" });
+
+      // Check if this verse is skipped
+      const isSkipped = this.skippedVerses.has(index);
+
+      // Apply skipped styling
+      if (isSkipped) {
+        refEl.addClass("verse-skipped");
+      }
 
       // Clickable verse label
       const refLabel = refEl.createEl("b", { text: verse.text });
       refLabel.style.cursor = "pointer";
+
+      // Add context menu for skip/unskip
+      refLabel.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        const menu = new (require('obsidian').Menu)();
+
+        if (isSkipped) {
+          menu.addItem((item: any) => {
+            item
+              .setTitle("Unskip verse")
+              .setIcon("check")
+              .onClick(() => {
+                this.skippedVerses.delete(index);
+                new Notice(`Unskipped: ${verse.text}`);
+                this.renderSidebar(editor);
+              });
+          });
+        } else {
+          menu.addItem((item: any) => {
+            item
+              .setTitle("Skip verse")
+              .setIcon("x")
+              .onClick(() => {
+                this.skippedVerses.add(index);
+                new Notice(`Skipped: ${verse.text}`);
+                this.renderSidebar(editor);
+              });
+          });
+        }
+
+        menu.showAtMouseEvent(e);
+      });
 
       refLabel.addEventListener("click", () => {
         const from = editor.offsetToPos(verse.start);
@@ -292,6 +334,109 @@ export class VerseDetectorView extends ItemView {
     }, 100);
 
     new Notice(`Formatted: ${verse.text}`);
+  }
+
+  // Format the next verse in the list using hotkey
+  public formatNextVerse(type: 'link' | 'embed') {
+    const editor = this.plugin.app.workspace.activeEditor?.editor;
+    if (!editor) {
+      new Notice("No active editor found.");
+      return;
+    }
+
+    if (this.detectedVerses.length === 0) {
+      new Notice("No verses detected. Open the sidebar to scan for verses.");
+      return;
+    }
+
+    // Skip over any skipped verses
+    const startIndex = this.currentVerseIndex;
+    while (this.skippedVerses.has(this.currentVerseIndex)) {
+      this.currentVerseIndex = (this.currentVerseIndex + 1) % this.detectedVerses.length;
+
+      // If we've looped back, all verses are skipped
+      if (this.currentVerseIndex === startIndex) {
+        new Notice("All verses have been skipped or formatted.");
+        return;
+      }
+    }
+
+    // Get the current verse
+    const verse = this.detectedVerses[this.currentVerseIndex];
+
+    // Determine if it's a range
+    const isRange = verse.text.includes('-') || verse.text.includes(',');
+
+    // Format based on type and range
+    let replacement: string;
+    if (type === 'link') {
+      replacement = isRange
+        ? linkVerseRange(verse.text, this.plugin.settings)
+        : linkSingleVerse(verse.text, this.plugin.settings, verse.originalText);
+    } else {
+      replacement = isRange
+        ? embedVerseRange(verse.text, this.plugin.settings)
+        : embedSingleVerse(verse.text, this.plugin.settings);
+    }
+
+    // Replace in editor
+    this.replaceInEditor(editor, verse, replacement);
+
+    // Move to next verse (wrap around if at end)
+    this.currentVerseIndex = (this.currentVerseIndex + 1) % this.detectedVerses.length;
+  }
+
+  // Skip the current verse and move to next
+  public skipNextVerse() {
+    if (this.detectedVerses.length === 0) {
+      new Notice("No verses detected.");
+      return;
+    }
+
+    // Mark current verse as skipped
+    this.skippedVerses.add(this.currentVerseIndex);
+
+    // Move to next verse
+    const startIndex = this.currentVerseIndex;
+    do {
+      this.currentVerseIndex = (this.currentVerseIndex + 1) % this.detectedVerses.length;
+
+      // If we've looped back to start, all verses are skipped
+      if (this.currentVerseIndex === startIndex) {
+        new Notice("All verses have been skipped. Resetting...");
+        this.skippedVerses.clear();
+        this.currentVerseIndex = 0;
+        this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+        return;
+      }
+    } while (this.skippedVerses.has(this.currentVerseIndex));
+
+    new Notice(`Skipped verse. Next: ${this.detectedVerses[this.currentVerseIndex].text}`);
+    this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+  }
+
+  // Unskip the current verse
+  public unskipCurrentVerse() {
+    if (this.detectedVerses.length === 0) {
+      new Notice("No verses detected.");
+      return;
+    }
+
+    if (this.skippedVerses.has(this.currentVerseIndex)) {
+      this.skippedVerses.delete(this.currentVerseIndex);
+      new Notice(`Unskipped: ${this.detectedVerses[this.currentVerseIndex].text}`);
+      this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+    } else {
+      new Notice(`Current verse is not skipped: ${this.detectedVerses[this.currentVerseIndex].text}`);
+    }
+  }
+
+  // Reset all skipped verses
+  public resetSkippedVerses() {
+    const count = this.skippedVerses.size;
+    this.skippedVerses.clear();
+    new Notice(`Reset ${count} skipped verse(s).`);
+    this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
   }
 }
 

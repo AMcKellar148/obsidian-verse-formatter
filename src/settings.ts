@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting, Plugin } from 'obsidian';
+import type { AbbreviationStyle } from './sblAbbreviations';
 
 export interface VerseFormatterSettings {
     useCustomTemplate: boolean;
@@ -6,6 +7,7 @@ export interface VerseFormatterSettings {
     autoDetect: boolean;
     autoDetectDelay: number;
     maxVerses: number;
+    abbreviationStyle: AbbreviationStyle;
 }
 
 export const DEFAULT_SETTINGS: VerseFormatterSettings = {
@@ -13,7 +15,8 @@ export const DEFAULT_SETTINGS: VerseFormatterSettings = {
     template: "[[{book} {chapter}.{verse}]]",
     autoDetect: true,
     autoDetectDelay: 1000,
-    maxVerses: 50
+    maxVerses: 50,
+    abbreviationStyle: 'full'
 }
 
 export class VerseFormatterSettingTab extends PluginSettingTab {
@@ -93,6 +96,19 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                         this.plugin.settings.maxVerses = parsed;
                         await this.plugin.saveSettings();
                     }
+                }));
+
+        new Setting(containerEl)
+            .setName('Book Name Style')
+            .setDesc('Choose how book names appear in verse links. SBL (Society of Biblical Literature) abbreviations follow academic standards.')
+            .addDropdown(dropdown => dropdown
+                .addOption('full', 'Full Names (e.g., "Genesis", "1 Corinthians")')
+                .addOption('sblPrimary', 'SBL Primary (e.g., "Gen", "1 Cor")')
+                .addOption('sblSecondary', 'SBL Secondary (e.g., "Gn", "1 Cor")')
+                .setValue(this.plugin.settings.abbreviationStyle)
+                .onChange(async (value: AbbreviationStyle) => {
+                    this.plugin.settings.abbreviationStyle = value;
+                    await this.plugin.saveSettings();
                 }));
     }
 }

@@ -115,3 +115,22 @@
     font-size: 0.85em;
     margin-top: 10px;
 }
+
+/* Skipped verse styling */
+.verse-detector-view .verse-skipped {
+    opacity: 0.4;
+}
+
+.verse-detector-view .verse-skipped b {
+    text-decoration: line-through;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.verse-detector-view .verse-skipped:hover {
+    opacity: 0.6;
+}
+
+.verse-detector-view .verse-skipped button {
+    opacity: 0.3;
+}

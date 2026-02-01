@@ -124,6 +124,91 @@ export default class VerseFormatter extends Plugin {
 				editor.replaceSelection(embedVerseRange(selection, this.settings));
 			},
 		});
+
+		// Link next verse (hotkey)
+		this.addCommand({
+			id: "link-next-verse",
+			name: "Format Next Verse (Link)",
+			callback: () => {
+				const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_VERSE)[0];
+				if (!existingLeaf) {
+					new Notice("Please open the Verse Detector sidebar first.");
+					return;
+				}
+				const view = existingLeaf.view as any;
+				if (view && typeof view.formatNextVerse === 'function') {
+					view.formatNextVerse('link');
+				}
+			},
+		});
+
+		// Embed next verse (hotkey)
+		this.addCommand({
+			id: "embed-next-verse",
+			name: "Format Next Verse (Embed)",
+			callback: () => {
+				const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_VERSE)[0];
+				if (!existingLeaf) {
+					new Notice("Please open the Verse Detector sidebar first.");
+					return;
+				}
+				const view = existingLeaf.view as any;
+				if (view && typeof view.formatNextVerse === 'function') {
+					view.formatNextVerse('embed');
+				}
+			},
+		});
+
+		// Skip next verse (hotkey)
+		this.addCommand({
+			id: "skip-next-verse",
+			name: "Skip Next Verse",
+			callback: () => {
+				const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_VERSE)[0];
+				if (!existingLeaf) {
+					new Notice("Please open the Verse Detector sidebar first.");
+					return;
+				}
+				const view = existingLeaf.view as any;
+				if (view && typeof view.skipNextVerse === 'function') {
+					view.skipNextVerse();
+				}
+			},
+		});
+
+		// Unskip current verse
+		this.addCommand({
+			id: "unskip-current-verse",
+			name: "Unskip Current Verse",
+			callback: () => {
+				const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_VERSE)[0];
+				if (!existingLeaf) {
+					new Notice("Please open the Verse Detector sidebar first.");
+					return;
+				}
+				const view = existingLeaf.view as any;
+				if (view && typeof view.unskipCurrentVerse === 'function') {
+					view.unskipCurrentVerse();
+				}
+			},
+		});
+
+		// Reset all skipped verses
+		this.addCommand({
+			id: "reset-skipped-verses",
+			name: "Reset All Skipped Verses",
+			callback: () => {
+				const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_VERSE)[0];
+				if (!existingLeaf) {
+					new Notice("Please open the Verse Detector sidebar first.");
+					return;
+				}
+				const view = existingLeaf.view as any;
+				if (view && typeof view.resetSkippedVerses === 'function') {
+					view.resetSkippedVerses();
+				}
+			},
+		});
 	}
 
 	async activateView() {
