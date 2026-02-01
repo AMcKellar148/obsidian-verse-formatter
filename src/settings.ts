@@ -8,6 +8,7 @@ export interface VerseFormatterSettings {
     autoDetectDelay: number;
     maxVerses: number;
     abbreviationStyle: AbbreviationStyle;
+    aliasInferredVerses: boolean;
 }
 
 export const DEFAULT_SETTINGS: VerseFormatterSettings = {
@@ -16,7 +17,8 @@ export const DEFAULT_SETTINGS: VerseFormatterSettings = {
     autoDetect: true,
     autoDetectDelay: 1000,
     maxVerses: 50,
-    abbreviationStyle: 'full'
+    abbreviationStyle: 'full',
+    aliasInferredVerses: true
 }
 
 export class VerseFormatterSettingTab extends PluginSettingTab {
@@ -108,6 +110,16 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.abbreviationStyle)
                 .onChange(async (value: AbbreviationStyle) => {
                     this.plugin.settings.abbreviationStyle = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Alias Inferred Verses')
+            .setDesc('When formatting inferred verses (like "verse 6"), use the original text as the alias so the flow of the text is preserved.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.aliasInferredVerses)
+                .onChange(async (value) => {
+                    this.plugin.settings.aliasInferredVerses = value;
                     await this.plugin.saveSettings();
                 }));
     }

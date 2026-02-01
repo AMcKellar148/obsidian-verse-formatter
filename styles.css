@@ -26,17 +26,19 @@
 
 /* Maintain glow logic for consistency if desired, or simpler hover */
 .verse-detector-view .header-icon-btn:hover {
-    color: var(--interactive-accent);
-    transform: scale(1.1);
-    background-color: transparent; /* Ensure no bg on hover */
-    box-shadow: none;
-    text-shadow: 0 0 5px var(--interactive-accent); /* Subtle text glow */
+  color: var(--interactive-accent);
+  transform: scale(1.1);
+  background-color: transparent;
+  /* Ensure no bg on hover */
+  box-shadow: none;
+  text-shadow: 0 0 5px var(--interactive-accent);
+  /* Subtle text glow */
 }
 
 /* Active state for Lock button */
 .verse-detector-view .header-icon-btn.is-active {
-    color: var(--interactive-accent);
-    text-shadow: 0 0 2px var(--interactive-accent);
+  color: var(--interactive-accent);
+  text-shadow: 0 0 2px var(--interactive-accent);
 }
 
 /* Verse list items */
@@ -96,6 +98,7 @@
     background-color: var(--interactive-accent);
     opacity: 0.6;
   }
+
   100% {
     background-color: transparent;
     opacity: 0;
@@ -104,33 +107,64 @@
 
 /* Active File Header Text */
 .verse-detector-view .view-header-title {
-    font-size: 0.9em;
-    color: var(--text-normal);
-    opacity: 0.9;
+  font-size: 0.9em;
+  color: var(--text-normal);
+  opacity: 0.9;
 }
 
 .more-verses-msg {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85em;
-    margin-top: 10px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin-top: 10px;
 }
 
 /* Skipped verse styling */
 .verse-detector-view .verse-skipped {
-    opacity: 0.4;
+  opacity: 0.4;
 }
 
 .verse-detector-view .verse-skipped b {
-    text-decoration: line-through;
-    color: var(--text-muted);
-    opacity: 0.5;
+  text-decoration: line-through;
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .verse-detector-view .verse-skipped:hover {
-    opacity: 0.6;
+  opacity: 0.6;
 }
 
 .verse-detector-view .verse-skipped button {
-    opacity: 0.3;
+  opacity: 0.3;
+}
+
+/* Context Control Section */
+.verse-detector-view .context-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 0 5px 10px 5px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.verse-detector-view .context-label {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.verse-detector-view .context-value {
+  flex-grow: 1;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--interactive-accent);
+}
+
+.verse-detector-view .context-control-row .header-icon-btn {
+  padding: 2px;
 }

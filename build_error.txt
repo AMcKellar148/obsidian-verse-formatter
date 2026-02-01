@@ -1,5 +1,10 @@
 
-> obsidian-verse-formatter-plugin@1.2.0 build
+> obsidian-verse-formatter-plugin@2.0.0 build
 > tsc -noEmit -skipLibCheck && node esbuild.config.mjs production
 
-src/VerseDetectorView.ts(326,62): error TS2554: Expected 1-2 arguments, but got 3.
+src/VerseDetectorView.ts(516,20): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/VerseDetectorView.ts(518,23): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/VerseDetectorView.ts(525,20): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/VerseDetectorView.ts(527,23): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/VerseDetectorView.ts(532,22): error TS7006: Parameter 'btn' implicitly has an 'any' type.
+src/VerseDetectorView.ts(543,22): error TS7006: Parameter 'btn' implicitly has an 'any' type.

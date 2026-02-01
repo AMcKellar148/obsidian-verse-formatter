@@ -100,9 +100,11 @@ export function linkSingleVerse(text: string, settings?: VerseFormatterSettings,
   const abbreviatedBook = getBookAbbreviation(book, abbreviationStyle);
   const target = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
 
-  // Use abbreviation for alias, unless originalText is significantly different (e.g., "chapter 5, verse 8")
-  const normalizedText = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
-  const useOriginalText = originalText && originalText.toLowerCase().includes('chapter');
+  // Use abbreviation for alias, unless originalText is specifically requested to be preserved
+  const isChapterRef = originalText && originalText.toLowerCase().includes('chapter');
+  const isInferredRef = originalText && settings?.aliasInferredVerses && !originalText.toLowerCase().includes(book.toLowerCase().substring(0, 3));
+  const useOriginalText = isChapterRef || isInferredRef;
+
   const alias = useOriginalText ? originalText : (verse ? `${abbreviatedBook} ${chapter}.${verse}` : `${abbreviatedBook} ${chapter}`);
 
   // Let's stick to the standard format for consistency with the new logic

@@ -193,6 +193,41 @@ export class VerseDetectorView extends ItemView {
       });
     refreshBtn.buttonEl.addClass("header-icon-btn");
 
+    // Context Control Section
+    const manualContext = this.service.getManualContext();
+    const contextRow = container.createEl("div", { cls: "context-control-row" });
+
+    contextRow.createEl("span", {
+      text: "Context:",
+      cls: "context-label"
+    });
+
+    const contextValueEl = contextRow.createEl("span", {
+      text: manualContext ? `${manualContext.book} ${manualContext.chapter}` : "Auto",
+      cls: "context-value"
+    });
+
+    if (manualContext) {
+      new ButtonComponent(contextRow)
+        .setIcon("x")
+        .setTooltip("Clear manual context")
+        .onClick(() => {
+          this.service.clearManualContext();
+          this.updateDetectedVerses(editor);
+          this.renderSidebar(editor);
+          new Notice("Context cleared (switching to auto)");
+        })
+        .buttonEl.addClass("header-icon-btn");
+    }
+
+    new ButtonComponent(contextRow)
+      .setIcon("edit")
+      .setTooltip("Set manual context")
+      .onClick(() => {
+        this.showContextModal(editor);
+      })
+      .buttonEl.addClass("header-icon-btn");
+
 
     // 🔹 Update verses logic check (already updated, just rendering list)
 
@@ -220,8 +255,22 @@ export class VerseDetectorView extends ItemView {
       }
 
       // Clickable verse label
-      const refLabel = refEl.createEl("b", { text: verse.text });
+      let labelText = verse.text;
+      if (verse.needsContext && verse.inferredContext) {
+        labelText = `${verse.text} (from ${verse.inferredContext})`;
+      } else if (verse.needsContext && !verse.inferredContext) {
+        labelText = `${verse.text} (⚠️ needs context)`;
+      }
+
+      const refLabel = refEl.createEl("b", { text: labelText });
       refLabel.style.cursor = "pointer";
+
+      // Add warning styling for verses needing context
+      if (verse.needsContext && !verse.inferredContext) {
+        refLabel.style.color = "var(--text-warning)";
+      } else if (verse.needsContext) {
+        refLabel.style.fontStyle = "italic";
+      }
 
       // Add context menu for skip/unskip
       refLabel.addEventListener("contextmenu", (e) => {
@@ -437,6 +486,79 @@ export class VerseDetectorView extends ItemView {
     this.skippedVerses.clear();
     new Notice(`Reset ${count} skipped verse(s).`);
     this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+  }
+
+  // Show modal to set manual context
+  private showContextModal(editor: any) {
+    const { Modal, Setting } = require('obsidian');
+
+    class ContextModal extends Modal {
+      book: string = '';
+      chapter: string = '';
+      onSubmit: (book: string, chapter: string) => void;
+
+      constructor(app: any, onSubmit: (book: string, chapter: string) => void) {
+        super(app);
+        this.onSubmit = onSubmit;
+      }
+
+      onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h3', { text: 'Set Manual Context' });
+        contentEl.createEl('p', {
+          text: 'Set the book and chapter for incomplete verse references (e.g., "verse 6").',
+          cls: 'setting-item-description'
+        });
+
+        new Setting(contentEl)
+          .setName('Book')
+          .setDesc('e.g., Romans, Genesis, 1 Corinthians')
+          .addText((text: any) => text
+            .setPlaceholder('Romans')
+            .onChange((value: string) => {
+              this.book = value;
+            }));
+
+        new Setting(contentEl)
+          .setName('Chapter')
+          .setDesc('Chapter number')
+          .addText((text: any) => text
+            .setPlaceholder('8')
+            .onChange((value: string) => {
+              this.chapter = value;
+            }));
+
+        new Setting(contentEl)
+          .addButton((btn: any) => btn
+            .setButtonText('Set Context')
+            .setCta()
+            .onClick(() => {
+              if (this.book && this.chapter) {
+                this.onSubmit(this.book, this.chapter);
+                this.close();
+              } else {
+                new (require('obsidian').Notice)('Please enter both book and chapter');
+              }
+            }))
+          .addButton((btn: any) => btn
+            .setButtonText('Cancel')
+            .onClick(() => {
+              this.close();
+            }));
+      }
+
+      onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+      }
+    }
+
+    new ContextModal(this.plugin.app, (book, chapter) => {
+      this.service.setManualContext(book, chapter);
+      this.updateDetectedVerses(editor);
+      this.renderSidebar(editor);
+      new Notice(`Context set to ${book} ${chapter}`);
+    }).open();
   }
 }
 

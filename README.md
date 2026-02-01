@@ -4,6 +4,8 @@ Automatically detects Bible references in your notes and allows you to link or e
 
 ## Features
 
+- **Context-Aware Detection (New in v2.1):** Detects incomplete references like "verse 6" and automatically infers the book/chapter from previous references in the note.
+- **Manual Context Override:** Manually set a book and chapter context to resolve ambiguous or missing references.
 - **Smart Detection:** Detects single verses, ranges, and lists.
 - **Auto-Detect:** Automatically detects verses as you type (debounced).
 - **File Lock:** Pin the detection view to a specific file so it doesn't switch when you change tabs.
@@ -22,12 +24,24 @@ Automatically detects Bible references in your notes and allows you to link or e
 The plugin is designed to be flexible and forgiving. It supports:
 
 - **Standard:** `Romans 1:1`, `Romans 1:1-3`
+- **Contextual:** `verse 6`, `in v. 12` (infers Romans 1 if Romans 1:1 was mentioned previously)
 - **Ranges with "and" / "&":** `Romans 1:1 and 2`, `Romans 1:1 & 2`
 - **Comma-Separated Lists:** `Romans 8:1, 3, 5`, `Romans 8, 9, 10`
 - **Chapter Only:** `Romans 8`, `Romans 8-10`
 - **Single-Chapter Books:** `Jude 9` (detects as Jude 1:9), `3 John 4`
 - **"Verse" Keyword:** `Acts 2 verse 42`, `Acts 2 v 42`, `Acts 2 vs 42`
 - **Missing Spaces:** `Colossians1.9` (detects as Colossians 1:9)
+
+## Context-Aware Detection (v2.1)
+
+The plugin can now find references like "verse 6" and use context to assign the correct book and chapter.
+
+### How it works:
+1. **Auto-Inference:** It looks for the last complete verse reference (e.g., "Romans 8:1") in the current paragraph or note.
+2. **Manual Override:** You can manually set the context in the sidebar header by clicking the **Edit** (pencil) icon. This is useful if you are writing about a specific chapter but haven't linked a verse yet.
+3. **Visual Feedback:** 
+   - Inferred verses are shown in *italics* with the source context (e.g., "verse 6 (from Romans 8)").
+   - Verses that need context but haven't found any will show a ⚠️ warning symbol.
 
 ## Settings
 
