@@ -4,7 +4,9 @@ Automatically detects Bible references in your notes and allows you to link or e
 
 ## Features
 
-- **Context-Aware Detection (New in v2.1):** Detects incomplete references like "verse 6" and automatically infers the book/chapter from previous references in the note.
+- **Consistent Sidebar Styling (New in v2.2):** Verse labels in the sidebar now match your selected abbreviation style (e.g., SBL Primary).
+- **Inferred Alias Toggle (New in v2.2):** Choose whether inferred verses should use their original text (like "verse 6") as the link alias.
+- **Context-Aware Detection:** Detects incomplete references like "verse 6" and automatically infers the book/chapter from previous references in the note.
 - **Manual Context Override:** Manually set a book and chapter context to resolve ambiguous or missing references.
 - **Smart Detection:** Detects single verses, ranges, and lists.
 - **Auto-Detect:** Automatically detects verses as you type (debounced).
@@ -120,8 +122,24 @@ npm run dev         # Watch for changes while developing
 npm test            # Run unit tests
 ```
 
-## What's New in v2.0
+## What's New in v2.2
 
+### Features
+- **Abbreviated Sidebar Labels:** The Bible References sidebar now respects your abbreviation style settings for all labels and context clues.
+- **Alias Inferred Verses Setting:** New toggle to ensure "verse 6" stays as "verse 6" after formatting, instead of being replaced by the full reference alias.
+
+## What's New in v2.1
+
+### Major Features
+- **Context-Aware Detection:** Support for "verse X" style references.
+- **Manual Context Row:** Set a global context for the current file to help with ambiguous references.
+- **Inferred Reference Styling:** Clear visual indicators for verses detected via context.
+
+### Improvements
+- Better UI management in the sidebar header.
+- Fixed several internal typing issues for more stable builds.
+
+## What's New in v2.0
 ### Major Features
 - **SBL Abbreviations:** Full support for Society of Biblical Literature standard abbreviations
 - **Hotkey Navigation:** Format verses sequentially without clicking
@@ -136,5 +154,5 @@ npm test            # Run unit tests
 
 ---
 
-**Version:** 2.0.0  
+**Version:** 2.2.0  
 **Author:** Alden McKellar

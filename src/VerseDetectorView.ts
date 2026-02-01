@@ -6,6 +6,7 @@ import {
   embedVerseRange,
   bibleBooks
 } from "./verseFormatter";
+import { getBookAbbreviation } from "./sblAbbreviations";
 
 import { VerseDetectorService, DetectedVerse } from "./VerseDetectorService";
 
@@ -83,6 +84,25 @@ export class VerseDetectorView extends ItemView {
   async onClose() {
     const container = this.containerEl.children[1];
     container.empty();
+  }
+
+  private formatDisplayLabel(text: string): string {
+    if (!text) return "";
+
+    // Check if it's an incomplete reference (starts with "verse")
+    if (text.toLowerCase().startsWith("verse")) return text;
+
+    // Try to split book and the rest (chapter/verse)
+    // Matches "1 Corinthians 13.1", "Genesis 1", etc.
+    const match = text.match(/^((?:\d\s)?[A-Za-z\s]+?)\s+(\d+(?:[\.:]\d+)?.*)$/);
+    if (!match) return text;
+
+    const book = match[1].trim();
+    const rest = match[2];
+    const style = this.plugin.settings.abbreviationStyle || 'full';
+
+    const abbreviatedBook = getBookAbbreviation(book, style);
+    return `${abbreviatedBook} ${rest}`;
   }
 
   updateDetectedVerses(editor: any) {
@@ -255,9 +275,9 @@ export class VerseDetectorView extends ItemView {
       }
 
       // Clickable verse label
-      let labelText = verse.text;
+      let labelText = this.formatDisplayLabel(verse.text);
       if (verse.needsContext && verse.inferredContext) {
-        labelText = `${verse.text} (from ${verse.inferredContext})`;
+        labelText = `${this.formatDisplayLabel(verse.text)} (from ${this.formatDisplayLabel(verse.inferredContext)})`;
       } else if (verse.needsContext && !verse.inferredContext) {
         labelText = `${verse.text} (⚠️ needs context)`;
       }
