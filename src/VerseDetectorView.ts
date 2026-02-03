@@ -102,7 +102,12 @@ export class VerseDetectorView extends ItemView {
       const book = match[1].trim();
       const rest = match[2];
       const abbreviatedBook = getBookAbbreviation(book, style);
-      return `${abbreviatedBook} ${rest}`;
+
+      // Handle separator in the "rest" part for display
+      const sep = (style === 'sblPrimary' || style === 'sblSecondary') ? ':' : '.';
+      const formattedRest = rest.replace(/[\.:]/, sep);
+
+      return `${abbreviatedBook} ${formattedRest}`;
     }
 
     // If no match, it might be just a book name (used in inferred context)

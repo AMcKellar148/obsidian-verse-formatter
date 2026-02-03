@@ -19,7 +19,17 @@ function findBookByNameOrAbbr(input: string): BibleBook | undefined {
 
 export function getFullBookName(input: string): string {
   const found = findBookByNameOrAbbr(input);
-  return found ? found.name : input;
+  if (!found) return input;
+
+  // Try to find the canonical SBL name if it exists, otherwise use the found name
+  const { sblAbbreviations } = require('./sblAbbreviations');
+  for (const canonicalName of Object.keys(sblAbbreviations)) {
+    if (canonicalName.toLowerCase() === found.name.toLowerCase()) {
+      return canonicalName;
+    }
+  }
+
+  return found.name;
 }
 
 function parseBookAndChapVerse(text: string): { book: string; chapVerse: string } {
@@ -98,14 +108,18 @@ export function linkSingleVerse(text: string, settings?: VerseFormatterSettings,
 
   // Target is always full name (the actual file), alias is the abbreviation
   const abbreviatedBook = getBookAbbreviation(book, abbreviationStyle);
-  const target = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
+  const targetBook = getFullBookName(book);
+  const target = verse ? `${targetBook} ${chapter}.${verse}` : `${targetBook} ${chapter}`;
+
+  // Separator for alias: SBL standard uses ':', default use '.'
+  const sep = (abbreviationStyle === 'sblPrimary' || abbreviationStyle === 'sblSecondary') ? ':' : '.';
 
   // Use abbreviation for alias, unless originalText is specifically requested to be preserved
   const isChapterRef = originalText && originalText.toLowerCase().includes('chapter');
   const isInferredRef = originalText && settings?.aliasInferredVerses && !originalText.toLowerCase().includes(book.toLowerCase().substring(0, 3));
   const useOriginalText = isChapterRef || isInferredRef;
 
-  const alias = useOriginalText ? originalText : (verse ? `${abbreviatedBook} ${chapter}.${verse}` : `${abbreviatedBook} ${chapter}`);
+  const alias = useOriginalText ? originalText : (verse ? `${abbreviatedBook} ${chapter}${sep}${verse}` : `${abbreviatedBook} ${chapter}`);
 
   // Let's stick to the standard format for consistency with the new logic
   return `[[${target}|${alias}]]`;
@@ -144,9 +158,11 @@ export function linkVerseRange(text: string, settings?: VerseFormatterSettings):
     }
 
     const abbreviatedBook = getBookAbbreviation(book, abbreviationStyle);
+    const targetBook = getFullBookName(book);
     // Target is always full name (the actual file), alias is the abbreviation
-    const target = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
-    const label = verse ? `${abbreviatedBook} ${chapter}.${verse}` : `${abbreviatedBook} ${chapter}`;
+    const target = verse ? `${targetBook} ${chapter}.${verse}` : `${targetBook} ${chapter}`;
+    const sep = (abbreviationStyle === 'sblPrimary' || abbreviationStyle === 'sblSecondary') ? ':' : '.';
+    const label = verse ? `${abbreviatedBook} ${chapter}${sep}${verse}` : `${abbreviatedBook} ${chapter}`;
     links.push(`[[${target}|${label}]]`);
   }
   return links.join(", ");
@@ -166,9 +182,10 @@ export function embedVerseRange(range: string, settings?: VerseFormatterSettings
 
     // Embeds don't use custom templates usually, they use standard Obsidian embed syntax
     const abbreviatedBook = getBookAbbreviation(book, abbreviationStyle);
-    // Target is always full name (the actual file), alias is the abbreviation
-    const target = verse ? `${book} ${chapter}.${verse}` : `${book} ${chapter}`;
-    const label = verse ? `${abbreviatedBook} ${chapter}.${verse}` : `${abbreviatedBook} ${chapter}`;
+    const targetBook = getFullBookName(book);
+    const target = verse ? `${targetBook} ${chapter}.${verse}` : `${targetBook} ${chapter}`;
+    const sep = (abbreviationStyle === 'sblPrimary' || abbreviationStyle === 'sblSecondary') ? ':' : '.';
+    const label = verse ? `${abbreviatedBook} ${chapter}${sep}${verse}` : `${abbreviatedBook} ${chapter}`;
 
     return `![[${target}#${target}|${label}]]`;
   });

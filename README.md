@@ -122,6 +122,12 @@ npm run dev         # Watch for changes while developing
 npm test            # Run unit tests
 ```
 
+## What's New in v2.3.2
+
+### Improvements
+- **Canonical Link Targets:** All verse links now use the full canonical book name for the target link (e.g., `[[Genesis 1.1]]`), regardless of how the book was abbreviated in the original text or context.
+- **SBL Separator Support:** Aliases using SBL Primary or Secondary styles now automatically use the standard `:` separator (e.g., `Gen 1:1`), while Full Name and custom styles retain the `.` separator for Obsidian compatibility.
+
 ## What's New in v2.3.1
 
 ### Improvements
@@ -177,5 +183,5 @@ npm test            # Run unit tests
 
 ---
 
-**Version:** 2.3.1  
+**Version:** 2.3.2  
 **Author:** Alden McKellar
