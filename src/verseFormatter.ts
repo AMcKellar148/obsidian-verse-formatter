@@ -9,11 +9,11 @@ export interface BibleBook {
 export const bibleBooks: BibleBook[] = bibleBooksData;
 
 function findBookByNameOrAbbr(input: string): BibleBook | undefined {
-  const key = input.trim().toLowerCase();
+  const key = input.trim().toLowerCase().replace(/\.$/, "");
   return bibleBooks.find(
     b =>
       b.name.toLowerCase() === key ||
-      b.abbr.some(a => a.toLowerCase() === key)
+      b.abbr.some(a => a.toLowerCase().replace(/\.$/, "") === key)
   );
 }
 
