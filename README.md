@@ -122,6 +122,11 @@ npm run dev         # Watch for changes while developing
 npm test            # Run unit tests
 ```
 
+## What's New in v2.3.1
+
+### Improvements
+- **Universal Period Support:** Enhanced the search logic to recognize book names and abbreviations regardless of whether they end with a period (e.g., both "Ps" and "Ps." are now correctly identified as Psalm).
+
 ## What's New in v2.3.0
 
 ### Major Features
@@ -172,5 +177,5 @@ npm test            # Run unit tests
 
 ---
 
-**Version:** 2.3.0  
+**Version:** 2.3.1  
 **Author:** Alden McKellar

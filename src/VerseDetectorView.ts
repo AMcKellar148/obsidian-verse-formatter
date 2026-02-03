@@ -92,17 +92,23 @@ export class VerseDetectorView extends ItemView {
     // Check if it's an incomplete reference (starts with "verse")
     if (text.toLowerCase().startsWith("verse")) return text;
 
+    const style = this.plugin.settings.abbreviationStyle || 'full';
+
     // Try to split book and the rest (chapter/verse)
     // Matches "1 Corinthians 13.1", "Genesis 1", etc.
     const match = text.match(/^((?:\d\s)?[A-Za-z\s]+?)\s+(\d+(?:[\.:]\d+)?.*)$/);
-    if (!match) return text;
 
-    const book = match[1].trim();
-    const rest = match[2];
-    const style = this.plugin.settings.abbreviationStyle || 'full';
+    if (match) {
+      const book = match[1].trim();
+      const rest = match[2];
+      const abbreviatedBook = getBookAbbreviation(book, style);
+      return `${abbreviatedBook} ${rest}`;
+    }
 
-    const abbreviatedBook = getBookAbbreviation(book, style);
-    return `${abbreviatedBook} ${rest}`;
+    // If no match, it might be just a book name (used in inferred context)
+    // Be careful not to abbreviate things that aren't books
+    const abbreviatedBook = getBookAbbreviation(text, style);
+    return abbreviatedBook;
   }
 
   updateDetectedVerses(editor: any) {

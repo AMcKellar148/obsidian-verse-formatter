@@ -17,7 +17,7 @@ function findBookByNameOrAbbr(input: string): BibleBook | undefined {
   );
 }
 
-function getFullBookName(input: string): string {
+export function getFullBookName(input: string): string {
   const found = findBookByNameOrAbbr(input);
   return found ? found.name : input;
 }

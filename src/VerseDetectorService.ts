@@ -1,4 +1,4 @@
-import { bibleBooks } from "./verseFormatter";
+import { bibleBooks, getFullBookName } from "./verseFormatter";
 
 export interface DetectedVerse {
     text: string;
@@ -20,7 +20,7 @@ export class VerseDetectorService {
 
     constructor() {
         this.numericRegex = new RegExp(
-            `\\b(${this.getBookPattern()})\\s*(\\d{1,3}(?:(?:[.:]|\\s+(?:verse|v\\.?|vs\\.?)\\s+)\\d{1,3})?(?:\\s*(?:-|and|&|,)\\s*\\d{1,3})*)`,
+            `\\b(${this.getBookPattern()})\\.?\\s*(\\d{1,3}(?:(?:[.:]|\\s+(?:verse|v\\.?|vs\\.?)\\s+)\\d{1,3})?(?:\\s*(?:-|and|&|,)\\s*\\d{1,3})*)`,
             "gi"
         );
 
@@ -50,7 +50,7 @@ export class VerseDetectorService {
     private getBookPattern(): string {
         return bibleBooks
             .flatMap(b => [b.name, ...b.abbr])
-            .map(b => b.replace(/\./g, "\\."))
+            .map(b => b.replace(/\./g, "")) // Remove periods from source to handle them optionally below
             .join("|");
     }
 
@@ -80,7 +80,7 @@ export class VerseDetectorService {
             const end = start + fullMatch.length;
             const isInside = isInsideLink(start, end);
             matches.push({
-                text: `${m[1]} ${m[2]}`,
+                text: `${getFullBookName(m[1])} ${m[2]}`,
                 originalText: fullMatch,
                 start,
                 end,
@@ -95,7 +95,7 @@ export class VerseDetectorService {
             const end = start + fullMatch.length;
             const isInside = isInsideLink(start, end);
             matches.push({
-                text: `${m[1].trim()} ${m[2]}.${m[3]}`, // normalized
+                text: `${getFullBookName(m[1].trim())} ${m[2]}.${m[3]}`, // normalized
                 originalText: fullMatch, // actual written-out text
                 start,
                 end,
