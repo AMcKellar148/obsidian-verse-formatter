@@ -385,8 +385,8 @@ export class VerseDetectorView extends ItemView {
   }
 
   replaceInEditor(editor: any, verse: DetectedVerse, replacement: string) {
-    // DEBUG: Check what text is being used
-    // new Notice(`Debug: Formatting '${verse.text}' -> '${replacement}'`);
+    // Determine the index of the verse being formatted
+    const verseIndex = this.detectedVerses.indexOf(verse);
 
     const startPos = editor.offsetToPos(verse.start);
     const endPos = editor.offsetToPos(verse.end);
@@ -397,10 +397,23 @@ export class VerseDetectorView extends ItemView {
     editor.setCursor(newEndPos);
     editor.scrollIntoView({ from: startPos, to: newEndPos }, true);
 
-    // Wait for editor to update before refreshing
-    setTimeout(() => {
-      this.renderSidebar(editor);
-    }, 100);
+    // Update skippedVerses indices since one item is being removed
+    if (verseIndex !== -1) {
+      const newSkipped = new Set<number>();
+      this.skippedVerses.forEach(idx => {
+        if (idx < verseIndex) {
+          newSkipped.add(idx);
+        } else if (idx > verseIndex) {
+          newSkipped.add(idx - 1);
+        }
+        // if idx === verseIndex, it's now formatted, so we don't add it
+      });
+      this.skippedVerses = newSkipped;
+    }
+
+    // Refresh everything immediately after formatting
+    this.updateDetectedVerses(editor); // Recalculate all verse positions
+    this.renderSidebar(editor);       // Re-draw the list
 
     new Notice(`Formatted: ${verse.text}`);
   }
@@ -451,8 +464,12 @@ export class VerseDetectorView extends ItemView {
     // Replace in editor
     this.replaceInEditor(editor, verse, replacement);
 
-    // Move to next verse (wrap around if at end)
-    this.currentVerseIndex = (this.currentVerseIndex + 1) % this.detectedVerses.length;
+    // After formatting, the list will refresh and this verse will be gone.
+    // So the "next" verse will shift into the CURRENT index.
+    // We only need to wrap around if we were at the very end.
+    if (this.currentVerseIndex >= this.detectedVerses.length - 1) {
+      this.currentVerseIndex = 0;
+    }
   }
 
   // Skip the current verse and move to next

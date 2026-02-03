@@ -7,12 +7,15 @@ export interface DetectedVerse {
     end: number;
     needsContext?: boolean; // True if this is an incomplete reference like "verse 6"
     inferredContext?: string; // The inferred book and chapter (e.g., "Romans 8")
+    isAlreadyFormatted?: boolean; // True if this was found inside an existing link
 }
 
 export class VerseDetectorService {
     private numericRegex: RegExp;
     private writtenRegex: RegExp;
     private incompleteRegex: RegExp;
+    private chapterVerseRegex: RegExp;
+    private delimitedRegex: RegExp;
     private manualContext: { book: string; chapter: string } | null = null;
 
     constructor() {
@@ -25,6 +28,11 @@ export class VerseDetectorService {
 
         // Detect incomplete references like "verse 6", "in verse 12", etc.
         this.incompleteRegex = /\b(?:in\s+)?(?:verse|v\.?|vs\.?)\s+(\d{1,3})\b/gi;
+
+        // Detect semicolon-style continuations like "; 10", "; 3:10", "; 4:5-6"
+        // Also detects chapter:verse patterns that appear standalone (e.g. "3:10")
+        this.chapterVerseRegex = /\b(\d{1,3})[:\.](\d{1,3}(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
+        this.delimitedRegex = /;\s*(\d{1,3}(?:[:\.]\d{1,3})?(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
     }
 
     setManualContext(book: string, chapter: string) {
@@ -70,15 +78,14 @@ export class VerseDetectorService {
             const fullMatch = m[0];
             const start = m.index!;
             const end = start + fullMatch.length;
-
-            if (!isInsideLink(start, end)) {
-                matches.push({
-                    text: `${m[1]} ${m[2]}`,
-                    originalText: fullMatch,
-                    start,
-                    end,
-                });
-            }
+            const isInside = isInsideLink(start, end);
+            matches.push({
+                text: `${m[1]} ${m[2]}`,
+                originalText: fullMatch,
+                start,
+                end,
+                isAlreadyFormatted: isInside
+            });
         }
 
         // Written-out verses
@@ -86,15 +93,14 @@ export class VerseDetectorService {
             const fullMatch = m[0];
             const start = m.index!;
             const end = start + fullMatch.length;
-
-            if (!isInsideLink(start, end)) {
-                matches.push({
-                    text: `${m[1].trim()} ${m[2]}.${m[3]}`, // normalized
-                    originalText: fullMatch, // actual written-out text
-                    start,
-                    end,
-                });
-            }
+            const isInside = isInsideLink(start, end);
+            matches.push({
+                text: `${m[1].trim()} ${m[2]}.${m[3]}`, // normalized
+                originalText: fullMatch, // actual written-out text
+                start,
+                end,
+                isAlreadyFormatted: isInside
+            });
         }
 
         // Detect incomplete references ("verse 6") and try to infer context
@@ -102,7 +108,9 @@ export class VerseDetectorService {
 
         // Keep order of appearance
         matches.sort((a, b) => a.start - b.start);
-        return matches;
+
+        // Filter out already formatted verses for the sidebar, but keep them for context during detection
+        return matches.filter(m => !m.isAlreadyFormatted);
     }
 
     private detectIncompleteReferences(
@@ -110,37 +118,74 @@ export class VerseDetectorService {
         matches: DetectedVerse[],
         isInsideLink: (start: number, end: number) => boolean
     ) {
+        // 1. Detect "verse 6" type references
         for (const m of text.matchAll(this.incompleteRegex)) {
-            const fullMatch = m[0];
-            const verseNum = m[1];
-            const start = m.index!;
-            const end = start + fullMatch.length;
+            this.processIncompleteMatch(m[0], m[1], m.index!, false, text, matches, isInsideLink);
+        }
 
-            if (isInsideLink(start, end)) continue;
+        // 2. Detect "3:10" chapter-verse patterns
+        for (const m of text.matchAll(this.chapterVerseRegex)) {
+            const hasChapter = true;
+            this.processIncompleteMatch(m[0], m[0], m.index!, hasChapter, text, matches, isInsideLink);
+        }
 
-            // Try to find context
-            const context = this.findContext(text, start, matches);
+        // 3. Detect semicolon continuations like "; 11"
+        for (const m of text.matchAll(this.delimitedRegex)) {
+            // Check if this continuation was already caught by chapterVerseRegex
+            const start = m.index! + (m[0].indexOf(m[1]));
+            const end = start + m[1].length;
+            if (matches.some(existing => existing.start === start && existing.end === end)) continue;
 
-            if (context) {
-                matches.push({
-                    text: `${context.book} ${context.chapter}.${verseNum}`,
-                    originalText: fullMatch,
-                    start,
-                    end,
-                    needsContext: true,
-                    inferredContext: `${context.book} ${context.chapter}`
-                });
+            const hasChapter = m[1].includes(':') || m[1].includes('.');
+            this.processIncompleteMatch(m[1], m[1], start, hasChapter, text, matches, isInsideLink);
+        }
+    }
+
+    private processIncompleteMatch(
+        fullMatch: string,
+        refPart: string,
+        start: number,
+        hasChapterInMatch: boolean,
+        text: string,
+        matches: DetectedVerse[],
+        isInsideLink: (start: number, end: number) => boolean
+    ) {
+        const end = start + fullMatch.length;
+        if (isInsideLink(start, end)) return;
+
+        // Try to find context (book and chapter)
+        const context = this.findContext(text, start, matches);
+
+        if (context) {
+            let normalizedText = '';
+            if (hasChapterInMatch) {
+                // If match is "3:10", we just need the book from context
+                normalizedText = `${context.book} ${refPart}`;
             } else {
-                // No context found - still add it but mark as needing context
-                matches.push({
-                    text: `verse ${verseNum}`,
-                    originalText: fullMatch,
-                    start,
-                    end,
-                    needsContext: true,
-                    inferredContext: undefined
-                });
+                // If match is "6", we need book and chapter from context
+                normalizedText = `${context.book} ${context.chapter}.${refPart}`;
             }
+
+            matches.push({
+                text: normalizedText,
+                originalText: fullMatch,
+                start,
+                end,
+                needsContext: true,
+                inferredContext: hasChapterInMatch ? context.book : `${context.book} ${context.chapter}`,
+                isAlreadyFormatted: false
+            });
+        } else if (!hasChapterInMatch || fullMatch.toLowerCase().startsWith('verse')) {
+            // Still add it if it's explicitly labeled "verse" so the user sees it needs context
+            matches.push({
+                text: fullMatch,
+                originalText: fullMatch,
+                start,
+                end,
+                needsContext: true,
+                inferredContext: undefined,
+                isAlreadyFormatted: false
+            });
         }
     }
 

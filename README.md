@@ -122,6 +122,24 @@ npm run dev         # Watch for changes while developing
 npm test            # Run unit tests
 ```
 
+## What's New in v2.3.0
+
+### Major Features
+- **Deep Context Support:** The plugin can now handle complex reference strings like `Romans 1.1; 3:10, 11; 4:5-6`.
+- **Chapter-Verse Detection:** Standalone chapter-verse patterns (e.g., "3:10") are now detected and correctly assigned a book based on the preceding context.
+- **Semicolon Lists:** Better support for semicolon-delimited lists where only the first reference explicitly mentions the book.
+
+## What's New in v2.2.2
+
+### Improvements
+- **Enhanced Link Context:** Incomplete references like "verse 6" now correctly infer their context from existing Bible links (e.g. `[[Romans 8.1]]`) found earlier in the note, even if those verses aren't currently in the detector list.
+
+## What's New in v2.2.1
+
+### Improvements
+- **Automatic List Refresh:** The verse list now automatically refreshes positions and offsets after every formatting action, ensuring that subsequent hotkey commands are perfectly accurate.
+- **Stable Skip Tracking:** Your skipped verses are now tracked across list refreshes, automatically adjusting their internal indices as other verses are formatted and removed from the list.
+
 ## What's New in v2.2
 
 ### Features
@@ -154,5 +172,5 @@ npm test            # Run unit tests
 
 ---
 
-**Version:** 2.2.0  
+**Version:** 2.3.0  
 **Author:** Alden McKellar
