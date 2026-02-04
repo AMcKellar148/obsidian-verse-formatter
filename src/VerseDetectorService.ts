@@ -95,7 +95,7 @@ export class VerseDetectorService {
             const end = start + fullMatch.length;
             const isInside = isInsideLink(start, end);
             matches.push({
-                text: `${getFullBookName(m[1].trim())} ${m[2]}.${m[3]}`, // normalized
+                text: `${getFullBookName(m[1].trim())} ${m[2]}:${m[3]}`, // normalized with :
                 originalText: fullMatch, // actual written-out text
                 start,
                 end,
@@ -118,26 +118,44 @@ export class VerseDetectorService {
         matches: DetectedVerse[],
         isInsideLink: (start: number, end: number) => boolean
     ) {
-        // 1. Detect "verse 6" type references
+        const allIncompleteMatches: { fullMatch: string, refPart: string, start: number, hasChapter: boolean }[] = [];
+
+        // 1. Collect "verse 6" type references
         for (const m of text.matchAll(this.incompleteRegex)) {
-            this.processIncompleteMatch(m[0], m[1], m.index!, false, text, matches, isInsideLink);
+            allIncompleteMatches.push({
+                fullMatch: m[0],
+                refPart: m[1],
+                start: m.index!,
+                hasChapter: false
+            });
         }
 
-        // 2. Detect "3:10" chapter-verse patterns
+        // 2. Collect "3:10" chapter-verse patterns
         for (const m of text.matchAll(this.chapterVerseRegex)) {
-            const hasChapter = true;
-            this.processIncompleteMatch(m[0], m[0], m.index!, hasChapter, text, matches, isInsideLink);
+            allIncompleteMatches.push({
+                fullMatch: m[0],
+                refPart: m[0],
+                start: m.index!,
+                hasChapter: true
+            });
         }
 
-        // 3. Detect semicolon continuations like "; 11"
+        // 3. Collect semicolon continuations like "; 11"
         for (const m of text.matchAll(this.delimitedRegex)) {
-            // Check if this continuation was already caught by chapterVerseRegex
             const start = m.index! + (m[0].indexOf(m[1]));
-            const end = start + m[1].length;
-            if (matches.some(existing => existing.start === start && existing.end === end)) continue;
+            allIncompleteMatches.push({
+                fullMatch: m[1],
+                refPart: m[1],
+                start: start,
+                hasChapter: m[1].includes(':') || m[1].includes('.')
+            });
+        }
 
-            const hasChapter = m[1].includes(':') || m[1].includes('.');
-            this.processIncompleteMatch(m[1], m[1], start, hasChapter, text, matches, isInsideLink);
+        // Sort by position and process in order so context can flow from one to the next
+        allIncompleteMatches.sort((a, b) => a.start - b.start);
+
+        for (const m of allIncompleteMatches) {
+            this.processIncompleteMatch(m.fullMatch, m.refPart, m.start, m.hasChapter, text, matches, isInsideLink);
         }
     }
 
@@ -171,7 +189,7 @@ export class VerseDetectorService {
                 normalizedText = `${context.book} ${refPart}`;
             } else {
                 // If match is "6", we need book and chapter from context
-                normalizedText = `${context.book} ${context.chapter}.${refPart}`;
+                normalizedText = `${context.book} ${context.chapter}:${refPart}`;
             }
 
             matches.push({
@@ -207,36 +225,33 @@ export class VerseDetectorService {
             return this.manualContext;
         }
 
-        // 2. Look for the last complete verse reference before this position
+        // Helper to find the last valid context in a list of references
+        const findLastRefContext = (refs: DetectedVerse[]) => {
+            // We need the last one before the position
+            const filtered = refs.filter(m => m.start < position);
+            if (filtered.length === 0) return null;
+
+            // Sort by start position just in case
+            filtered.sort((a, b) => a.start - b.start);
+
+            for (let i = filtered.length - 1; i >= 0; i--) {
+                const m = filtered[i];
+                // A reference is valid context if it has a book/chapter
+                const ctx = this.extractBookChapter(m.text);
+                if (ctx) return ctx;
+            }
+            return null;
+        };
+
+        // 2. Look in the same paragraph
         const textBefore = text.substring(0, position);
+        const searchStart = textBefore.lastIndexOf('\n\n') !== -1 ? textBefore.lastIndexOf('\n\n') : 0;
+        const paragraphRefs = existingMatches.filter(m => m.start >= searchStart);
+        const paragraphCtx = findLastRefContext(paragraphRefs);
+        if (paragraphCtx) return paragraphCtx;
 
-        // Find the last paragraph break
-        const lastParagraph = textBefore.lastIndexOf('\n\n');
-        const searchStart = lastParagraph !== -1 ? lastParagraph : 0;
-        const paragraphText = textBefore.substring(searchStart);
-
-        // Look for complete references in the same paragraph
-        const completeRefs = existingMatches.filter(
-            m => !m.needsContext && m.start >= searchStart && m.start < position
-        );
-
-        if (completeRefs.length > 0) {
-            // Use the most recent complete reference
-            const lastRef = completeRefs[completeRefs.length - 1];
-            return this.extractBookChapter(lastRef.text);
-        }
-
-        // 3. If no paragraph context, look in the entire document before this point
-        const allCompleteRefs = existingMatches.filter(
-            m => !m.needsContext && m.start < position
-        );
-
-        if (allCompleteRefs.length > 0) {
-            const lastRef = allCompleteRefs[allCompleteRefs.length - 1];
-            return this.extractBookChapter(lastRef.text);
-        }
-
-        return null;
+        // 3. Look in the entire document before this point
+        return findLastRefContext(existingMatches);
     }
 
     private extractBookChapter(verseText: string): { book: string; chapter: string } | null {
