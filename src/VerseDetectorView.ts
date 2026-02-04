@@ -154,11 +154,6 @@ export class VerseDetectorView extends ItemView {
 
     // 🔹 Header with Refresh and Undo
     const controlsRow = container.createEl("div", { cls: "view-header nav-header" });
-    controlsRow.style.display = "flex";
-    controlsRow.style.justifyContent = "space-between";
-    controlsRow.style.alignItems = "center";
-    controlsRow.style.padding = "10px 5px";
-    controlsRow.style.marginBottom = "5px";
 
     // Undo button
     const leftControls = controlsRow.createEl("div", { cls: "nav-buttons-container" });
@@ -186,8 +181,6 @@ export class VerseDetectorView extends ItemView {
     const titleEl = controlsRow.createEl("div", { cls: "view-header-title" });
     titleEl.setText(displayFileName);
     titleEl.style.fontWeight = "bold";
-    // titleEl.style.flexGrow = "1";
-    // titleEl.style.textAlign = "center";
 
     // Right Controls (Lock + Refresh)
     const rightControls = controlsRow.createEl("div", { cls: "nav-buttons-container" });

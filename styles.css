@@ -1,4 +1,7 @@
 /* ==== Verse Detector Sidebar ==== */
+.verse-detector-view {
+  overflow-x: hidden;
+}
 
 /* Verse item buttons */
 .verse-detector-view .verse-item button {
@@ -110,6 +113,12 @@
   font-size: 0.9em;
   color: var(--text-normal);
   opacity: 0.9;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 4px;
 }
 
 .more-verses-msg {
@@ -138,6 +147,15 @@
   opacity: 0.3;
 }
 
+/* Header Row */
+.verse-detector-view .nav-header {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 5px;
+  margin-bottom: 5px;
+}
+
 /* Context Control Section */
 .verse-detector-view .context-control-row {
   display: flex;
@@ -163,6 +181,9 @@
   font-size: 0.9em;
   font-weight: 500;
   color: var(--interactive-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .verse-detector-view .context-control-row .header-icon-btn {
