@@ -1,9 +1,9 @@
 # Bible Verse Formatter
+<img width="1607" height="615" alt="Bible Verse Detection " src="https://github.com/user-attachments/assets/3fa263af-bb93-43f7-92b6-af265601bf9d" />
 
 Automatically detects Bible references in your notes and allows you to link or embed them in Obsidian.
 
 ## Features
-
 - **Consistent Sidebar Styling (New in v2.2):** Verse labels in the sidebar now match your selected abbreviation style (e.g., SBL Primary).
 - **Inferred Alias Toggle (New in v2.2):** Choose whether inferred verses should use their original text (like "verse 6") as the link alias.
 - **Context-Aware Detection:** Detects incomplete references like "verse 6" and automatically infers the book/chapter from previous references in the note.
@@ -21,6 +21,7 @@ Automatically detects Bible references in your notes and allows you to link or e
 - **Custom Templates:** Define your own link format (e.g., `[[{book} {chapter}:{verse}]]`).
 - **Ribbon Icon:** Quick access to the detection sidebar.
 
+![BibleVerseFormatter-short](https://github.com/user-attachments/assets/aa7545c7-cad9-408a-81b8-d3c62f24312e)
 ## Supported Formats
 
 The plugin is designed to be flexible and forgiving. It supports:
