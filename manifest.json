@@ -1,10 +1,10 @@
 {
 	"id": "obsidian-verse-formatter-plugin",
-	"name": "Verse Formatter",
-	"version": "2.3.2",
+	"name": "Bible Verse Formatter",
+	"version": "2.3.3",
 	"minAppVersion": "0.15.0",
 	"description": "Format and embed bible verses with ease",
 	"author": "Alden McKellar",
-	"authorUrl": "https://github.com/AMcKellar148/obsidian-verse-formatter.git",
+	"authorUrl": "https://github.com/AMcKellar148",
 	"isDesktopOnly": false
 }

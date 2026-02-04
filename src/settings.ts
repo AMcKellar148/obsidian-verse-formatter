@@ -34,10 +34,10 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Verse Formatter Settings' });
+        containerEl.createEl('h2', { text: 'Bible Verse Formatter Settings' });
 
         new Setting(containerEl)
-            .setName('Use Custom Template')
+            .setName('Use custom template')
             .setDesc('Enable to use a custom template for verse links. If disabled, the default formatting (with conditional aliasing) is used.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.useCustomTemplate)
@@ -51,7 +51,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
 
         if (this.plugin.settings.useCustomTemplate) {
             new Setting(containerEl)
-                .setName('Link Template')
+                .setName('Link template')
                 .setDesc('Available placeholders: {book}, {chapter}, {verse}, {original} (the original text). Example: [[{book} {chapter}:{verse}]]')
                 .addText(text => text
                     .setPlaceholder('[[{book} {chapter}.{verse}]]')
@@ -63,7 +63,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
         }
 
         new Setting(containerEl)
-            .setName('Auto-Detect Verses')
+            .setName('Auto-detect verses')
             .setDesc('Automatically detect verses when you stop typing.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.autoDetect)
@@ -73,7 +73,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Auto-Detect Delay (ms)')
+            .setName('Auto-detect delay (ms)')
             .setDesc('How long to wait after typing before detecting verses (1000ms = 1 second).')
             .addText(text => text
                 .setPlaceholder('1000')
@@ -87,7 +87,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Maximum Verses to Display')
+            .setName('Maximum verses to display')
             .setDesc('Limit the number of verses shown in the detection panel for performance.')
             .addText(text => text
                 .setPlaceholder('50')
@@ -101,7 +101,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Book Name Style')
+            .setName('Book name style')
             .setDesc('Choose how book names appear in verse links. SBL (Society of Biblical Literature) abbreviations follow academic standards.')
             .addDropdown(dropdown => dropdown
                 .addOption('full', 'Full Names (e.g., "Genesis", "1 Corinthians")')
@@ -114,7 +114,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Alias Inferred Verses')
+            .setName('Alias inferred verses')
             .setDesc('When formatting inferred verses (like "verse 6"), use the original text as the alias so the flow of the text is preserved.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.aliasInferredVerses)

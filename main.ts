@@ -9,7 +9,7 @@ export default class VerseFormatter extends Plugin {
 	settings: VerseFormatterSettings;
 
 	async onload() {
-		console.log("📖 Verse Formatter Plugin loaded");
+		console.log("📖 Bible Verse Formatter Plugin loaded");
 
 		await this.loadSettings();
 
@@ -234,7 +234,7 @@ export default class VerseFormatter extends Plugin {
 
 
 	onunload() {
-		console.log("📖 Verse Formatter Plugin unloaded");
+		console.log("📖 Bible Verse Formatter Plugin unloaded");
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_VERSE);
 	}
 

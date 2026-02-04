@@ -153,6 +153,14 @@ export class VerseDetectorService {
         const end = start + fullMatch.length;
         if (isInsideLink(start, end)) return;
 
+        // Check for overlap with existing matches to prevent duplicates (e.g., "1:1" inside "Genesis 1:1")
+        const isOverlap = matches.some(m =>
+            (start >= m.start && start < m.end) ||
+            (end > m.start && end <= m.end) ||
+            (m.start >= start && m.start < end)
+        );
+        if (isOverlap) return;
+
         // Try to find context (book and chapter)
         const context = this.findContext(text, start, matches);
 

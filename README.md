@@ -1,4 +1,4 @@
-# Verse Formatter
+# Bible Verse Formatter
 
 Automatically detects Bible references in your notes and allows you to link or embed them in Obsidian.
 
@@ -122,6 +122,11 @@ npm run dev         # Watch for changes while developing
 npm test            # Run unit tests
 ```
 
+## What's New in v2.3.3
+
+### Improvements
+- **Duplicate Prevention:** Fixed an issue where verses would be duplicated in the sidebar if they were part of both a full reference and an inferred reference (e.g., "1:1" inside "Genesis 1:1" no longer creates a separate entry).
+
 ## What's New in v2.3.2
 
 ### Improvements
@@ -183,5 +188,5 @@ npm test            # Run unit tests
 
 ---
 
-**Version:** 2.3.2  
+**Version:** 2.3.3  
 **Author:** Alden McKellar

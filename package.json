@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-verse-formatter-plugin",
-	"version": "2.3.2",
+	"version": "2.3.3",
 	"description": "Allows formatting and embedding bible verses with ease in Obsidian.",
 	"main": "main.js",
 	"scripts": {
@@ -10,8 +10,9 @@
 		"test": "jest"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "Alden McKellar",
 	"license": "MIT",
+	"repository": "https://github.com/AMcKellar148/obsidian-verse-formatter",
 	"devDependencies": {
 		"@types/jest": "^30.0.0",
 		"@types/node": "^16.18.126",
