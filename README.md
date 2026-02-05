@@ -114,6 +114,10 @@ Right-click any verse in the sidebar to:
    `.obsidian/plugins/obsidian-verse-formatter-plugin`
 3. Reload Obsidian and enable the plugin under **Community Plugins → Installed Plugins**.
 
+## Downloadable KJV files for Obsidian
+- Follow the link below to download the files for free
+- https://drive.google.com/drive/folders/1pWKWj1lijO5-xgEjmz6yw2nuyiquo0IO?usp=drive_link
+
 ## Development
 
 ```bash
