@@ -3,7 +3,7 @@ import type { VerseDetectorView } from './src/VerseDetectorView';
 
 import { VerseFormatterSettings, DEFAULT_SETTINGS, VerseFormatterSettingTab } from './src/settings';
 
-const VIEW_TYPE_VERSE = 'verse-detector-view';
+const VIEW_TYPE_VERSE = 'bible-verse-formatter-view';
 
 export default class VerseFormatter extends Plugin {
 	settings: VerseFormatterSettings;

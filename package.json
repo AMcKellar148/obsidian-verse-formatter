@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-verse-formatter-plugin",
+	"name": "bible-verse-formatter",
 	"version": "2.3.3",
 	"description": "Allows formatting and embedding bible verses with ease in Obsidian.",
 	"main": "main.js",
