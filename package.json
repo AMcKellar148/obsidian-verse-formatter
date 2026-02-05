@@ -1,7 +1,7 @@
 {
 	"name": "bible-verse-formatter",
 	"version": "2.3.3",
-	"description": "Allows formatting and embedding bible verses with ease in Obsidian.",
+	"description": "Automatically detect and format Bible references. Supports SBL abbreviations, context-aware detection, and flexible templates.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
