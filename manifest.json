@@ -3,7 +3,7 @@
 	"name": "Bible Verse Formatter",
 	"version": "2.3.3",
 	"minAppVersion": "0.15.0",
-	"description": "Format and embed bible verses with ease",
+	"description": "Automatically detect and format Bible references. Supports SBL abbreviations, context-aware detection, and flexible templates.",
 	"author": "Alden McKellar",
 	"authorUrl": "https://github.com/AMcKellar148",
 	"isDesktopOnly": false
