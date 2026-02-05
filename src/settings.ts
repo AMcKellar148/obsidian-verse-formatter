@@ -1,5 +1,6 @@
-import { App, PluginSettingTab, Setting, Plugin } from 'obsidian';
+import { App, PluginSettingTab, Setting } from 'obsidian';
 import type { AbbreviationStyle } from './sblAbbreviations';
+import type VerseFormatter from '../main';
 
 export interface VerseFormatterSettings {
     useCustomTemplate: boolean;
@@ -22,9 +23,9 @@ export const DEFAULT_SETTINGS: VerseFormatterSettings = {
 }
 
 export class VerseFormatterSettingTab extends PluginSettingTab {
-    plugin: any;
+    plugin: VerseFormatter;
 
-    constructor(app: App, plugin: Plugin) {
+    constructor(app: App, plugin: VerseFormatter) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -34,7 +35,9 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Bible Verse Formatter Settings' });
+        new Setting(containerEl)
+            .setName('Bible verse formatter settings')
+            .setHeading();
 
         new Setting(containerEl)
             .setName('Use custom template')
@@ -44,8 +47,6 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.useCustomTemplate = value;
                     await this.plugin.saveSettings();
-                    // Force refresh of settings UI to show/hide template field if we wanted to be fancy, 
-                    // but for now just letting it stay visible is fine or we can reload.
                     this.display();
                 }));
 
@@ -102,11 +103,11 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Book name style')
-            .setDesc('Choose how book names appear in verse links. SBL (Society of Biblical Literature) abbreviations follow academic standards.')
+            .setDesc('Choose how book names appear in verse links. SBL abbreviations follow academic standards.')
             .addDropdown(dropdown => dropdown
-                .addOption('full', 'Full Names (e.g., "Genesis", "1 Corinthians")')
-                .addOption('sblPrimary', 'SBL Primary (e.g., "Gen", "1 Cor")')
-                .addOption('sblSecondary', 'SBL Secondary (e.g., "Gn", "1 Cor")')
+                .addOption('full', 'Full names (e.g., "Genesis", "1 Corinthians")')
+                .addOption('sblPrimary', 'SBL primary (e.g., "Gen", "1 Cor")')
+                .addOption('sblSecondary', 'SBL secondary (e.g., "Gn", "1 Cor")')
                 .setValue(this.plugin.settings.abbreviationStyle)
                 .onChange(async (value: AbbreviationStyle) => {
                     this.plugin.settings.abbreviationStyle = value;
@@ -124,3 +125,4 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
                 }));
     }
 }
+

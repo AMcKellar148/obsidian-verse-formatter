@@ -1,26 +1,27 @@
-import { ItemView, WorkspaceLeaf, ButtonComponent, Notice, debounce, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, ButtonComponent, Notice, debounce, TFile, Editor, Menu, Modal, Setting, App } from "obsidian";
 import {
   linkSingleVerse,
   embedSingleVerse,
   linkVerseRange,
   embedVerseRange,
-  bibleBooks
 } from "./verseFormatter";
 import { getBookAbbreviation } from "./sblAbbreviations";
-
 import { VerseDetectorService, DetectedVerse } from "./VerseDetectorService";
+import type VerseFormatter from "../main";
+
+export const VIEW_TYPE_VERSE = 'bible-verse-formatter-view';
 
 export class VerseDetectorView extends ItemView {
-  plugin: any;
+  plugin: VerseFormatter;
   detectedVerses: DetectedVerse[] = [];
   private service: VerseDetectorService;
-  private debouncedUpdate: any;
-  private isLocked: boolean = false;
+  private debouncedUpdate: any; // debounce returns a function with any-like signature
+  private isLocked = false;
   private lockedFile: TFile | null = null;
-  private currentVerseIndex: number = 0;
+  private currentVerseIndex = 0;
   private skippedVerses: Set<number> = new Set();
 
-  constructor(leaf: WorkspaceLeaf, plugin: any) {
+  constructor(leaf: WorkspaceLeaf, plugin: VerseFormatter) {
     super(leaf);
     this.plugin = plugin;
     this.containerEl.addClass("verse-detector-view");
@@ -28,9 +29,9 @@ export class VerseDetectorView extends ItemView {
     this.refreshDebounce();
   }
 
-  refreshDebounce() {
+  refreshDebounce(): void {
     this.debouncedUpdate = debounce(
-      (editor: any) => {
+      (editor: Editor) => {
         if (this.plugin.settings.autoDetect) {
           this.updateDetectedVerses(editor);
           this.renderSidebar(editor);
@@ -41,13 +42,13 @@ export class VerseDetectorView extends ItemView {
     );
   }
 
-  getViewType() { return "verse-detector-view"; }
-  getDisplayText() { return "Bible Verse Detector"; }
+  getViewType(): string { return VIEW_TYPE_VERSE; }
+  getDisplayText(): string { return "Bible verse detector"; }
   getIcon(): string { return "book-open"; }
 
-  async onOpen() {
+  onOpen(): Promise<void> {
     this.registerEvent(
-      this.app.workspace.on('editor-change', (editor, info) => {
+      this.app.workspace.on('editor-change', (editor) => {
         if (this.debouncedUpdate) {
           // If locked, only update if the editor belongs to the locked file
           if (this.isLocked && this.lockedFile) {
@@ -75,15 +76,18 @@ export class VerseDetectorView extends ItemView {
     );
 
     const editor = this.plugin.app.workspace.activeEditor?.editor;
-    if (!editor) return;
-
-    // Initialize lockedFile if needed (though logic starts unlocked)
-    this.renderSidebar(editor);
+    if (editor) {
+      this.renderSidebar(editor);
+    }
+    return Promise.resolve();
   }
 
-  async onClose() {
+  onClose(): Promise<void> {
     const container = this.containerEl.children[1];
-    container.empty();
+    if (container) {
+      container.empty();
+    }
+    return Promise.resolve();
   }
 
   private formatDisplayLabel(text: string): string {
@@ -116,40 +120,14 @@ export class VerseDetectorView extends ItemView {
     return abbreviatedBook;
   }
 
-  updateDetectedVerses(editor: any) {
+  updateDetectedVerses(editor: Editor): void {
     const text = editor.getValue();
     this.detectedVerses = this.service.detectVerses(text);
   }
 
-  addUndoButton(editor: any, container: HTMLElement) {
-    const undoEl = container.createEl("div", { cls: "undo-button" });
-    new ButtonComponent(undoEl)
-      .setIcon("undo")
-      .setTooltip("Undo last verse formatting")
-      .onClick(() => {
-        editor.undo(); // undo last editor action
-        this.updateDetectedVerses(editor); // re-run detection
-        this.renderSidebar(editor); // update sidebar
-        new Notice("Undid last action");
-      });
-  }
-
-  addRefreshButton(editor: any, parent: HTMLElement) {
-    const refreshEl = parent.createEl("div", { cls: "refresh-button" });
-
-    new ButtonComponent(refreshEl)
-      .setIcon("refresh-cw")
-      .setTooltip("Refresh detected verses")
-      .onClick(() => {
-        this.updateDetectedVerses(editor);
-        this.renderSidebar(editor);
-        new Notice("Verse detection refreshed!");
-      });
-  }
-
-
-  renderSidebar(editor: any) {
-    const container = this.containerEl.children[1];
+  renderSidebar(editor: Editor): void {
+    const container = this.containerEl.children[1] as HTMLElement;
+    if (!container) return;
     container.empty();
 
     // 🔹 Header with Refresh and Undo
@@ -170,7 +148,7 @@ export class VerseDetectorView extends ItemView {
 
     // File Name Header
     // Determine displayed filename
-    let displayFileName = "No File";
+    let displayFileName = "No file";
     if (this.isLocked && this.lockedFile) {
       displayFileName = this.lockedFile.basename;
     } else {
@@ -178,9 +156,10 @@ export class VerseDetectorView extends ItemView {
       if (activeFile) displayFileName = activeFile.basename;
     }
 
-    const titleEl = controlsRow.createEl("div", { cls: "view-header-title" });
-    titleEl.setText(displayFileName);
-    titleEl.style.fontWeight = "bold";
+    controlsRow.createEl("div", {
+      cls: "view-header-title u-bold",
+      text: displayFileName
+    });
 
     // Right Controls (Lock + Refresh)
     const rightControls = controlsRow.createEl("div", { cls: "nav-buttons-container" });
@@ -213,7 +192,7 @@ export class VerseDetectorView extends ItemView {
         this.refreshDebounce();
         this.updateDetectedVerses(editor);
         this.renderSidebar(editor);
-        new Notice("Verse detection refreshed!");
+        new Notice("Verse detection refreshed");
       });
     refreshBtn.buttonEl.addClass("header-icon-btn");
 
@@ -226,7 +205,7 @@ export class VerseDetectorView extends ItemView {
       cls: "context-label"
     });
 
-    const contextValueEl = contextRow.createEl("span", {
+    contextRow.createEl("span", {
       text: manualContext ? `${manualContext.book} ${manualContext.chapter}` : "Auto",
       cls: "context-value"
     });
@@ -256,11 +235,11 @@ export class VerseDetectorView extends ItemView {
     // 🔹 Update verses logic check (already updated, just rendering list)
 
     if (this.detectedVerses.length === 0) {
-      container.createEl("p", { text: "No unformatted Bible references found." });
+      container.createEl("p", { text: "No unformatted Bible references found" });
       return;
     }
 
-    container.createEl("h3", { text: "Detected Bible References" });
+    container.createEl("h3", { text: "Detected Bible references" });
 
     // Limit verses
     const maxVerses = this.plugin.settings.maxVerses || 50;
@@ -287,22 +266,21 @@ export class VerseDetectorView extends ItemView {
       }
 
       const refLabel = refEl.createEl("b", { text: labelText });
-      refLabel.style.cursor = "pointer";
 
       // Add warning styling for verses needing context
       if (verse.needsContext && !verse.inferredContext) {
-        refLabel.style.color = "var(--text-warning)";
+        refLabel.addClass("needs-context-warning");
       } else if (verse.needsContext) {
-        refLabel.style.fontStyle = "italic";
+        refLabel.addClass("needs-context-info");
       }
 
       // Add context menu for skip/unskip
       refLabel.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        const menu = new (require('obsidian').Menu)();
+        const menu = new Menu();
 
         if (isSkipped) {
-          menu.addItem((item: any) => {
+          menu.addItem((item) => {
             item
               .setTitle("Unskip verse")
               .setIcon("check")
@@ -313,7 +291,7 @@ export class VerseDetectorView extends ItemView {
               });
           });
         } else {
-          menu.addItem((item: any) => {
+          menu.addItem((item) => {
             item
               .setTitle("Skip verse")
               .setIcon("x")
@@ -336,7 +314,7 @@ export class VerseDetectorView extends ItemView {
         editor.scrollIntoView({ from, to }, true);
 
         // Optional: manual adjustment for centering in CodeMirror
-        const cm = editor.cm as any;
+        const cm = (editor as any).cm as any;
         if (cm && cm.display) {
           const line = from.line;
           const coords = cm.charCoords({ line, ch: 0 }, "local");
@@ -383,12 +361,12 @@ export class VerseDetectorView extends ItemView {
     if (hiddenCount > 0) {
       container.createEl("div", {
         text: `... and ${hiddenCount} more verses`,
-        cls: "more-verses-msg"
-      }).style.fontStyle = "italic";
+        cls: "more-verses-msg u-italic"
+      });
     }
   }
 
-  replaceInEditor(editor: any, verse: DetectedVerse, replacement: string) {
+  replaceInEditor(editor: Editor, verse: DetectedVerse, replacement: string): void {
     // Determine the index of the verse being formatted
     const verseIndex = this.detectedVerses.indexOf(verse);
 
@@ -423,15 +401,15 @@ export class VerseDetectorView extends ItemView {
   }
 
   // Format the next verse in the list using hotkey
-  public formatNextVerse(type: 'link' | 'embed') {
+  public formatNextVerse(type: 'link' | 'embed'): void {
     const editor = this.plugin.app.workspace.activeEditor?.editor;
     if (!editor) {
-      new Notice("No active editor found.");
+      new Notice("No active editor found");
       return;
     }
 
     if (this.detectedVerses.length === 0) {
-      new Notice("No verses detected. Open the sidebar to scan for verses.");
+      new Notice("No verses detected (open the sidebar to scan for verses)");
       return;
     }
 
@@ -442,7 +420,7 @@ export class VerseDetectorView extends ItemView {
 
       // If we've looped back, all verses are skipped
       if (this.currentVerseIndex === startIndex) {
-        new Notice("All verses have been skipped or formatted.");
+        new Notice("All verses have been skipped or formatted");
         return;
       }
     }
@@ -477,9 +455,9 @@ export class VerseDetectorView extends ItemView {
   }
 
   // Skip the current verse and move to next
-  public skipNextVerse() {
+  public skipNextVerse(): void {
     if (this.detectedVerses.length === 0) {
-      new Notice("No verses detected.");
+      new Notice("No verses detected");
       return;
     }
 
@@ -493,108 +471,49 @@ export class VerseDetectorView extends ItemView {
 
       // If we've looped back to start, all verses are skipped
       if (this.currentVerseIndex === startIndex) {
-        new Notice("All verses have been skipped. Resetting...");
+        new Notice("All verses have been skipped (resetting...)");
         this.skippedVerses.clear();
         this.currentVerseIndex = 0;
-        this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+        const editor = this.plugin.app.workspace.activeEditor?.editor;
+        if (editor) this.renderSidebar(editor);
         return;
       }
     } while (this.skippedVerses.has(this.currentVerseIndex));
 
-    new Notice(`Skipped verse. Next: ${this.detectedVerses[this.currentVerseIndex].text}`);
-    this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+    new Notice(`Skipped verse (next: ${this.detectedVerses[this.currentVerseIndex].text})`);
+    const editor = this.plugin.app.workspace.activeEditor?.editor;
+    if (editor) this.renderSidebar(editor);
   }
 
   // Unskip the current verse
-  public unskipCurrentVerse() {
+  public unskipCurrentVerse(): void {
     if (this.detectedVerses.length === 0) {
-      new Notice("No verses detected.");
+      new Notice("No verses detected");
       return;
     }
 
     if (this.skippedVerses.has(this.currentVerseIndex)) {
       this.skippedVerses.delete(this.currentVerseIndex);
       new Notice(`Unskipped: ${this.detectedVerses[this.currentVerseIndex].text}`);
-      this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+      const editor = this.plugin.app.workspace.activeEditor?.editor;
+      if (editor) this.renderSidebar(editor);
     } else {
       new Notice(`Current verse is not skipped: ${this.detectedVerses[this.currentVerseIndex].text}`);
     }
   }
 
   // Reset all skipped verses
-  public resetSkippedVerses() {
+  public resetSkippedVerses(): void {
     const count = this.skippedVerses.size;
     this.skippedVerses.clear();
-    new Notice(`Reset ${count} skipped verse(s).`);
-    this.renderSidebar(this.plugin.app.workspace.activeEditor?.editor);
+    new Notice(`Reset ${count} skipped verse(s)`);
+    const editor = this.plugin.app.workspace.activeEditor?.editor;
+    if (editor) this.renderSidebar(editor);
   }
 
   // Show modal to set manual context
-  private showContextModal(editor: any) {
-    const { Modal, Setting } = require('obsidian');
-
-    class ContextModal extends Modal {
-      book: string = '';
-      chapter: string = '';
-      onSubmit: (book: string, chapter: string) => void;
-
-      constructor(app: any, onSubmit: (book: string, chapter: string) => void) {
-        super(app);
-        this.onSubmit = onSubmit;
-      }
-
-      onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl('h3', { text: 'Set Manual Context' });
-        contentEl.createEl('p', {
-          text: 'Set the book and chapter for incomplete verse references (e.g., "verse 6").',
-          cls: 'setting-item-description'
-        });
-
-        new Setting(contentEl)
-          .setName('Book')
-          .setDesc('e.g., Romans, Genesis, 1 Corinthians')
-          .addText((text: any) => text
-            .setPlaceholder('Romans')
-            .onChange((value: string) => {
-              this.book = value;
-            }));
-
-        new Setting(contentEl)
-          .setName('Chapter')
-          .setDesc('Chapter number')
-          .addText((text: any) => text
-            .setPlaceholder('8')
-            .onChange((value: string) => {
-              this.chapter = value;
-            }));
-
-        new Setting(contentEl)
-          .addButton((btn: any) => btn
-            .setButtonText('Set Context')
-            .setCta()
-            .onClick(() => {
-              if (this.book && this.chapter) {
-                this.onSubmit(this.book, this.chapter);
-                this.close();
-              } else {
-                new (require('obsidian').Notice)('Please enter both book and chapter');
-              }
-            }))
-          .addButton((btn: any) => btn
-            .setButtonText('Cancel')
-            .onClick(() => {
-              this.close();
-            }));
-      }
-
-      onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-      }
-    }
-
-    new ContextModal(this.plugin.app, (book, chapter) => {
+  private showContextModal(editor: Editor): void {
+    new ContextModal(this.app, (book, chapter) => {
       this.service.setManualContext(book, chapter);
       this.updateDetectedVerses(editor);
       this.renderSidebar(editor);
@@ -603,7 +522,67 @@ export class VerseDetectorView extends ItemView {
   }
 }
 
-// Utility to escape special characters in regex
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+class ContextModal extends Modal {
+  book = '';
+  chapter = '';
+  onSubmit: (book: string, chapter: string) => void;
+
+  constructor(app: App, onSubmit: (book: string, chapter: string) => void) {
+    super(app);
+    this.onSubmit = onSubmit;
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+
+    new Setting(contentEl)
+      .setName('Set manual context')
+      .setHeading();
+
+    contentEl.createEl('p', {
+      text: 'Set the book and chapter for incomplete verse references (e.g., "verse 6").',
+      cls: 'setting-item-description'
+    });
+
+    new Setting(contentEl)
+      .setName('Book')
+      .setDesc('e.g., Romans, Genesis, 1 Corinthians')
+      .addText((text) => text
+        .setPlaceholder('Romans')
+        .onChange((value: string) => {
+          this.book = value;
+        }));
+
+    new Setting(contentEl)
+      .setName('Chapter')
+      .setDesc('Chapter number')
+      .addText((text) => text
+        .setPlaceholder('8')
+        .onChange((value: string) => {
+          this.chapter = value;
+        }));
+
+    new Setting(contentEl)
+      .addButton((btn) => btn
+        .setButtonText('Set context')
+        .setCta()
+        .onClick(() => {
+          if (this.book && this.chapter) {
+            this.onSubmit(this.book, this.chapter);
+            this.close();
+          } else {
+            new Notice('Please enter both book and chapter');
+          }
+        }))
+      .addButton((btn) => btn
+        .setButtonText('Cancel')
+        .onClick(() => {
+          this.close();
+        }));
+  }
+
+  onClose(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
 }

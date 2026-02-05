@@ -1,4 +1,5 @@
 import bibleBooksData from "./bibleAbbrs.json";
+import { getBookAbbreviation, sblAbbreviations } from './sblAbbreviations';
 import { VerseFormatterSettings } from "./settings";
 
 export interface BibleBook {
@@ -22,7 +23,6 @@ export function getFullBookName(input: string): string {
   if (!found) return input;
 
   // Try to find the canonical SBL name if it exists, otherwise use the found name
-  const { sblAbbreviations } = require('./sblAbbreviations');
   for (const canonicalName of Object.keys(sblAbbreviations)) {
     if (canonicalName.toLowerCase() === found.name.toLowerCase()) {
       return canonicalName;
@@ -102,8 +102,6 @@ export function linkSingleVerse(text: string, settings?: VerseFormatterSettings,
     return applyTemplate(settings.template, { book, chapter, verse: verse || "", original: text });
   }
 
-  // Import abbreviation function
-  const { getBookAbbreviation } = require('./sblAbbreviations');
   const abbreviationStyle = settings?.abbreviationStyle || 'full';
 
   // Target is always full name (the actual file), alias is the abbreviation
@@ -117,7 +115,7 @@ export function linkSingleVerse(text: string, settings?: VerseFormatterSettings,
   // Use abbreviation for alias, unless originalText is specifically requested to be preserved
   const isChapterRef = originalText && originalText.toLowerCase().includes('chapter');
   const isInferredRef = originalText && settings?.aliasInferredVerses && !originalText.toLowerCase().includes(book.toLowerCase().substring(0, 3));
-  const useOriginalText = isChapterRef || isInferredRef;
+  const useOriginalText = !!(isChapterRef || isInferredRef);
 
   const alias = useOriginalText ? originalText : (verse ? `${abbreviatedBook} ${chapter}${sep}${verse}` : `${abbreviatedBook} ${chapter}`);
 
@@ -144,8 +142,6 @@ export function linkVerseRange(text: string, settings?: VerseFormatterSettings):
   const expanded = expandVerseList(text);
   if (expanded.length === 0) return text;
 
-  // Import abbreviation function
-  const { getBookAbbreviation } = require('./sblAbbreviations');
   const abbreviationStyle = settings?.abbreviationStyle || 'full';
 
   const links: string[] = [];
@@ -173,8 +169,6 @@ export function embedVerseRange(range: string, settings?: VerseFormatterSettings
   const expanded = expandVerseList(range);
   if (expanded.length === 0) return range;
 
-  // Import abbreviation function
-  const { getBookAbbreviation } = require('./sblAbbreviations');
   const abbreviationStyle = settings?.abbreviationStyle || 'full';
 
   const embedded = expanded.map(item => {
@@ -220,8 +214,8 @@ function expandVerseList(text: string): { book: string; chapter: string; verse?:
       // Possible formats: "1-3", "8:1-3", "8:1-8:3" (unlikely with our normalization but possible)
       // We need to handle "1-3" using current context.
 
-      let startStr = rangeMatch[1];
-      let endStr = rangeMatch[2];
+      const startStr = rangeMatch[1];
+      const endStr = rangeMatch[2];
 
       // Parse start
       let startChap = currentChapter;

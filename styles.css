@@ -186,6 +186,22 @@
   white-space: nowrap;
 }
 
+.verse-detector-view .verse-item b.needs-context-warning {
+  color: var(--text-warning);
+}
+
+.verse-detector-view .verse-item b.needs-context-info {
+  font-style: italic;
+}
+
+.verse-detector-view .u-bold {
+  font-weight: bold;
+}
+
+.verse-detector-view .u-italic {
+  font-style: italic;
+}
+
 .verse-detector-view .context-control-row .header-icon-btn {
   padding: 2px;
 }

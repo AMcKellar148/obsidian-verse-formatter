@@ -31,19 +31,19 @@ export class VerseDetectorService {
 
         // Detect semicolon-style continuations like "; 10", "; 3:10", "; 4:5-6"
         // Also detects chapter:verse patterns that appear standalone (e.g. "3:10")
-        this.chapterVerseRegex = /\b(\d{1,3})[:\.](\d{1,3}(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
-        this.delimitedRegex = /;\s*(\d{1,3}(?:[:\.]\d{1,3})?(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
+        this.chapterVerseRegex = /\b(\d{1,3})[:.](\d{1,3}(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
+        this.delimitedRegex = /;\s*(\d{1,3}(?:[:.]\d{1,3})?(?:(?:\s*(?:-|and|&|,)\s*)\d{1,3})*)\b/gi;
     }
 
-    setManualContext(book: string, chapter: string) {
+    setManualContext(book: string, chapter: string): void {
         this.manualContext = { book, chapter };
     }
 
-    clearManualContext() {
+    clearManualContext(): void {
         this.manualContext = null;
     }
 
-    getManualContext() {
+    getManualContext(): { book: string; chapter: string } | null {
         return this.manualContext;
     }
 
@@ -116,8 +116,8 @@ export class VerseDetectorService {
     private detectIncompleteReferences(
         text: string,
         matches: DetectedVerse[],
-        isInsideLink: (start: number, end: number) => boolean
-    ) {
+        isInsideLink: (matchStart: number, matchEnd: number) => boolean
+    ): void {
         const allIncompleteMatches: { fullMatch: string, refPart: string, start: number, hasChapter: boolean }[] = [];
 
         // 1. Collect "verse 6" type references
@@ -125,7 +125,7 @@ export class VerseDetectorService {
             allIncompleteMatches.push({
                 fullMatch: m[0],
                 refPart: m[1],
-                start: m.index!,
+                start: m.index ?? 0,
                 hasChapter: false
             });
         }
@@ -135,14 +135,14 @@ export class VerseDetectorService {
             allIncompleteMatches.push({
                 fullMatch: m[0],
                 refPart: m[0],
-                start: m.index!,
+                start: m.index ?? 0,
                 hasChapter: true
             });
         }
 
         // 3. Collect semicolon continuations like "; 11"
         for (const m of text.matchAll(this.delimitedRegex)) {
-            const start = m.index! + (m[0].indexOf(m[1]));
+            const start = (m.index ?? 0) + (m[0].indexOf(m[1]));
             allIncompleteMatches.push({
                 fullMatch: m[1],
                 refPart: m[1],
@@ -256,7 +256,7 @@ export class VerseDetectorService {
 
     private extractBookChapter(verseText: string): { book: string; chapter: string } | null {
         // Parse "Romans 8.1" or "Romans 8" to extract book and chapter
-        const match = verseText.match(/^(.+?)\s+(\d+)(?:\.|:)?/);
+        const match = verseText.match(/^(.+?)\s+(\d+)(?:[.:])?/);
         if (match) {
             return {
                 book: match[1].trim(),
