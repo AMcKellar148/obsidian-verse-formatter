@@ -36,7 +36,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('Bible verse formatter settings')
+            .setName('General')
             .setHeading();
 
         new Setting(containerEl)

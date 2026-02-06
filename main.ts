@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
+import { Editor, Notice, Plugin } from 'obsidian';
 import { VerseDetectorView, VIEW_TYPE_VERSE } from './src/VerseDetectorView';
 import { VerseFormatterSettings, DEFAULT_SETTINGS, VerseFormatterSettingTab } from './src/settings';
 import { linkSingleVerse, embedSingleVerse, linkVerseRange, embedVerseRange } from './src/verseFormatter';
@@ -33,9 +33,9 @@ export default class VerseFormatter extends Plugin {
 				this.app.workspace.revealLeaf(existingLeaf);
 
 				// Refresh its detection
-				const view = existingLeaf.view as VerseDetectorView;
+				const view = existingLeaf.view;
 				const editor = this.app.workspace.activeEditor?.editor;
-				if (view && editor) {
+				if (view instanceof VerseDetectorView && editor) {
 					view.updateDetectedVerses(editor);
 					view.renderSidebar(editor);
 					new Notice("Verse detection refreshed");
@@ -55,7 +55,7 @@ export default class VerseFormatter extends Plugin {
 			this.app.workspace.revealLeaf(leaf);
 
 			// Refresh detection for the new view
-			const newView = leaf.view as VerseDetectorView;
+			const newView = leaf.view;
 			const editor = this.app.workspace.activeEditor?.editor;
 			if (editor && newView instanceof VerseDetectorView) {
 				newView.updateDetectedVerses(editor);

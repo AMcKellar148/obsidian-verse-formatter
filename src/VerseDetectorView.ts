@@ -15,7 +15,7 @@ export class VerseDetectorView extends ItemView {
   plugin: VerseFormatter;
   detectedVerses: DetectedVerse[] = [];
   private service: VerseDetectorService;
-  private debouncedUpdate: any; // debounce returns a function with any-like signature
+  private debouncedUpdate: ((editor: Editor) => void) & { cancel(): void };
   private isLocked = false;
   private lockedFile: TFile | null = null;
   private currentVerseIndex = 0;
@@ -83,10 +83,7 @@ export class VerseDetectorView extends ItemView {
   }
 
   onClose(): Promise<void> {
-    const container = this.containerEl.children[1];
-    if (container) {
-      container.empty();
-    }
+    this.contentEl.empty();
     return Promise.resolve();
   }
 
@@ -100,7 +97,7 @@ export class VerseDetectorView extends ItemView {
 
     // Try to split book and the rest (chapter/verse)
     // Matches "1 Corinthians 13.1", "Genesis 1", etc.
-    const match = text.match(/^((?:\d\s)?[A-Za-z\s]+?)\s+(\d+(?:[\.:]\d+)?.*)$/);
+    const match = text.match(/^((?:\d\s)?[A-Za-z\s]+?)\s+(\d+(?:[.:]\d+)?.*)$/);
 
     if (match) {
       const book = match[1].trim();
@@ -109,7 +106,7 @@ export class VerseDetectorView extends ItemView {
 
       // Handle separator in the "rest" part for display
       const sep = (style === 'sblPrimary' || style === 'sblSecondary') ? ':' : '.';
-      const formattedRest = rest.replace(/[\.:]/, sep);
+      const formattedRest = rest.replace(/[.:]/, sep);
 
       return `${abbreviatedBook} ${formattedRest}`;
     }
@@ -126,8 +123,7 @@ export class VerseDetectorView extends ItemView {
   }
 
   renderSidebar(editor: Editor): void {
-    const container = this.containerEl.children[1] as HTMLElement;
-    if (!container) return;
+    const container = this.contentEl;
     container.empty();
 
     // 🔹 Header with Refresh and Undo
@@ -314,8 +310,8 @@ export class VerseDetectorView extends ItemView {
         editor.scrollIntoView({ from, to }, true);
 
         // Optional: manual adjustment for centering in CodeMirror
-        const cm = (editor as any).cm as any;
-        if (cm && cm.display) {
+        const cm = (editor as { cm?: { display?: unknown, charCoords: (pos: { line: number, ch: number }, type: string) => { top: number }, getScrollerElement: () => { clientHeight: number }, scrollTo: (x: number | null, y: number) => void } }).cm;
+        if (cm?.display) {
           const line = from.line;
           const coords = cm.charCoords({ line, ch: 0 }, "local");
           const halfHeight = cm.getScrollerElement().clientHeight / 2;
