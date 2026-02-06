@@ -76,7 +76,7 @@ export class VerseDetectorService {
         // Numeric verses
         for (const m of text.matchAll(this.numericRegex)) {
             const fullMatch = m[0];
-            const start = m.index!;
+            const start = m.index ?? 0;
             const end = start + fullMatch.length;
             const isInside = isInsideLink(start, end);
             matches.push({
@@ -91,7 +91,7 @@ export class VerseDetectorService {
         // Written-out verses
         for (const m of text.matchAll(this.writtenRegex)) {
             const fullMatch = m[0];
-            const start = m.index!;
+            const start = m.index ?? 0;
             const end = start + fullMatch.length;
             const isInside = isInsideLink(start, end);
             matches.push({

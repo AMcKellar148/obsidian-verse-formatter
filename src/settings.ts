@@ -36,10 +36,6 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('General')
-            .setHeading();
-
-        new Setting(containerEl)
             .setName('Use custom template')
             .setDesc('Enable to use a custom template for verse links. If disabled, the default formatting (with conditional aliasing) is used.')
             .addToggle(toggle => toggle

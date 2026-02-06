@@ -17,7 +17,7 @@ export default class VerseFormatter extends Plugin {
 		// Command to open the verse detection pane
 		this.addCommand({
 			id: "open-verse-detector",
-			name: "Detect Bible references",
+			name: "Detect bible references",
 			callback: () => {
 				void this.activateView();
 			}
@@ -122,7 +122,7 @@ export default class VerseFormatter extends Plugin {
 				}
 				const view = existingLeaf.view;
 				if (view instanceof VerseDetectorView) {
-					view.formatNextVerse('link');
+					void view.formatNextVerse('link');
 				}
 			},
 		});
@@ -139,7 +139,7 @@ export default class VerseFormatter extends Plugin {
 				}
 				const view = existingLeaf.view;
 				if (view instanceof VerseDetectorView) {
-					view.formatNextVerse('embed');
+					void view.formatNextVerse('embed');
 				}
 			},
 		});

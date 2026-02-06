@@ -43,7 +43,7 @@ export class VerseDetectorView extends ItemView {
   }
 
   getViewType(): string { return VIEW_TYPE_VERSE; }
-  getDisplayText(): string { return "Bible verse detector"; }
+  getDisplayText(): string { return "bible verse detector"; }
   getIcon(): string { return "book-open"; }
 
   onOpen(): Promise<void> {
@@ -202,7 +202,7 @@ export class VerseDetectorView extends ItemView {
     });
 
     contextRow.createEl("span", {
-      text: manualContext ? `${manualContext.book} ${manualContext.chapter}` : "Auto",
+      text: manualContext ? `${manualContext.book} ${manualContext.chapter}` : "auto",
       cls: "context-value"
     });
 
@@ -231,11 +231,11 @@ export class VerseDetectorView extends ItemView {
     // 🔹 Update verses logic check (already updated, just rendering list)
 
     if (this.detectedVerses.length === 0) {
-      container.createEl("p", { text: "No unformatted Bible references found" });
+      container.createEl("p", { text: "No unformatted bible references found" });
       return;
     }
 
-    container.createEl("h3", { text: "Detected Bible references" });
+    container.createEl("h3", { text: "Detected bible references" });
 
     // Limit verses
     const maxVerses = this.plugin.settings.maxVerses || 50;
@@ -308,15 +308,6 @@ export class VerseDetectorView extends ItemView {
 
         editor.setCursor(from);
         editor.scrollIntoView({ from, to }, true);
-
-        // Optional: manual adjustment for centering in CodeMirror
-        const cm = (editor as { cm?: { display?: unknown, charCoords: (pos: { line: number, ch: number }, type: string) => { top: number }, getScrollerElement: () => { clientHeight: number }, scrollTo: (x: number | null, y: number) => void } }).cm;
-        if (cm?.display) {
-          const line = from.line;
-          const coords = cm.charCoords({ line, ch: 0 }, "local");
-          const halfHeight = cm.getScrollerElement().clientHeight / 2;
-          cm.scrollTo(null, coords.top - halfHeight + 10);
-        }
 
         new Notice(`Jumped to: ${verse.text}`);
       });
