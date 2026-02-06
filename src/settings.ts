@@ -99,7 +99,7 @@ export class VerseFormatterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Book name style')
-            .setDesc('Choose how book names appear in verse links. SBL abbreviations follow academic standards.')
+            .setDesc('Choose how book names appear in verse links.')
             .addDropdown(dropdown => dropdown
                 .addOption('full', 'Full names (e.g., "Genesis", "1 Corinthians")')
                 .addOption('sblPrimary', 'SBL primary (e.g., "Gen", "1 Cor")')

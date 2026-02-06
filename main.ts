@@ -30,7 +30,7 @@ export default class VerseFormatter extends Plugin {
 
 			if (existingLeaf) {
 				// Reveal existing leaf
-				this.app.workspace.revealLeaf(existingLeaf);
+				void this.app.workspace.revealLeaf(existingLeaf);
 
 				// Refresh its detection
 				const view = existingLeaf.view;
@@ -52,7 +52,7 @@ export default class VerseFormatter extends Plugin {
 			}
 
 			await leaf.setViewState({ type: VIEW_TYPE_VERSE, active: true });
-			this.app.workspace.revealLeaf(leaf);
+			void this.app.workspace.revealLeaf(leaf);
 
 			// Refresh detection for the new view
 			const newView = leaf.view;
@@ -202,7 +202,7 @@ export default class VerseFormatter extends Plugin {
 
 		if (existingLeaf) {
 			// If it exists, just reveal it
-			this.app.workspace.revealLeaf(existingLeaf);
+			void this.app.workspace.revealLeaf(existingLeaf);
 			return;
 		}
 
@@ -214,7 +214,7 @@ export default class VerseFormatter extends Plugin {
 		}
 
 		await leaf.setViewState({ type: VIEW_TYPE_VERSE, active: true });
-		this.app.workspace.revealLeaf(leaf);
+		void this.app.workspace.revealLeaf(leaf);
 	}
 
 	onunload(): void {

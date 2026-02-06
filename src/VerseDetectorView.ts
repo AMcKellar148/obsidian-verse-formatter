@@ -43,7 +43,7 @@ export class VerseDetectorView extends ItemView {
   }
 
   getViewType(): string { return VIEW_TYPE_VERSE; }
-  getDisplayText(): string { return "bible verse detector"; }
+  getDisplayText(): string { return "Bible verse detector"; }
   getIcon(): string { return "book-open"; }
 
   onOpen(): Promise<void> {
